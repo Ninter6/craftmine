@@ -1,0 +1,8 @@
+//
+// Created by Ninter6 on 2024/7/15.
+//
+
+#ifndef CRAFTMINE_RENDERER_HPP
+#define CRAFTMINE_RENDERER_HPP
+
+#endif //CRAFTMINE_RENDERER_HPP

@@ -1,0 +1,3 @@
+[submodule "dep/glfwpp"]
+	path = dep/glfwpp
+	url = git@github.com:Ninter6/glfwpp.git
