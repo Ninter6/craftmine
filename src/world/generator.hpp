@@ -2,7 +2,13 @@
 // Created by Ninter6 on 2024/7/21.
 //
 
-#ifndef CRAFTMINE_GENERATOR_HPP
-#define CRAFTMINE_GENERATOR_HPP
+#pragma once
 
-#endif //CRAFTMINE_GENERATOR_HPP
+#include "chunk.hpp"
+#include "math/noise.hpp"
+
+struct WorldGenerator {
+    size_t seed;
+
+    Chunk generateChunk(ChunkPos pos) const;
+};

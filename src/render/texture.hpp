@@ -2,7 +2,33 @@
 // Created by Ninter6 on 2024/7/18.
 //
 
-#ifndef CRAFTMINE_TEXTURE_HPP
-#define CRAFTMINE_TEXTURE_HPP
+#pragma once
 
-#endif //CRAFTMINE_TEXTURE_HPP
+#include <memory>
+#include <string>
+
+#include "math/mathpls.h"
+
+#include "glad.h"
+
+struct Texture {
+    Texture() = default;
+    Texture(uint8_t* data, mathpls::ivec2 size);
+
+    ~Texture();
+
+    Texture(Texture&&) = delete;
+
+    void bind() const;
+    void bind(int n) const;
+
+    mathpls::ivec2 size{};
+    GLuint id{};
+
+    static std::unique_ptr<Texture> LoadFromFile(std::string_view file);
+};
+
+struct TextureOneColor : public Texture {
+    TextureOneColor(mathpls::vec4 col) :
+    Texture(mathpls::vec<uint8_t, 4>(mathpls::clamp(round(col*255.f), 0.f, 255.f)).value_ptr(), {1, 1}) {}
+};
