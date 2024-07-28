@@ -36,9 +36,12 @@ BlockType Chunk::get_block(mathpls::ivec3 pos) const {
 
 void Chunk::set_block(mathpls::ivec3 pos, BlockType type) {
     assert(0 <= pos.x && pos.x < 16 && 0 <= pos.z && pos.z < 16);
-    raise_height((float)pos.y);
+    if (high_map[pos.x][pos.z] <= pos.y) {
+        high_map[pos.x][pos.z] = pos.y + 1;
+        raise_height((float) pos.y);
+    }
     auto& block = blocks[pos.y][pos.z][pos.x];
-    if (::get_block(type)->transparent() != ::get_block(block.type)->transparent())
+    if (::get_block(type)->fragmentary() != ::get_block(block.type)->fragmentary())
         new_neighbor(pos.y, pos.z, pos.x);
     if (::get_block(type)->renderable() && !::get_block(block.type)->renderable())
         block.neighbors = search_neighbors(pos.y, pos.z, pos.x);
@@ -47,6 +50,7 @@ void Chunk::set_block(mathpls::ivec3 pos, BlockType type) {
 }
 
 BlockBase* Chunk::get_block(int y, int z, int x) const {
+    if (y >= blocks.size()) return ::get_block(BlockType::air);
     return ::get_block(blocks[y][z][x].type);
 }
 
@@ -55,16 +59,17 @@ bool Chunk::is_renderable(int y, int z, int x) const {
 }
 
 bool Chunk::is_transparent(int y, int z, int x) const {
-    return get_block(y, z, x)->transparent();
+    return get_block(y, z, x)->fragmentary();
 }
 
 FaceMask Chunk::search_neighbors(int y, int z, int x) const {
+    if (y >= high_map[x][z]) return 0;
     FaceMask rst = 0;
-    if (z == 0 || is_transparent(y, z - 1, x)) rst |= (int)FaceType::front;
-    if (z == 15 || is_transparent(y, z + 1, x)) rst |= (int)FaceType::back;
-    if (x == 15 || is_transparent(y, z, x + 1)) rst |= (int)FaceType::left;
-    if (x == 0 || is_transparent(y, z, x - 1)) rst |= (int)FaceType::right;
-    if (y == blocks.size()-1 || is_transparent(y + 1, z, x)) rst |= (int)FaceType::top;
+    if (z == 0 ? !neighbor[2] || neighbor[2]->is_transparent(y, 15, x) : is_transparent(y, z - 1, x)) rst |= (int)FaceType::front;
+    if (z == 15 ? !neighbor[1] || neighbor[1]->is_transparent(y, 0, x) : is_transparent(y, z + 1, x)) rst |= (int)FaceType::back;
+    if (x == 15 ? !neighbor[0] || neighbor[0]->is_transparent(y, z, 0) : is_transparent(y, z, x + 1)) rst |= (int)FaceType::left;
+    if (x == 0 ? !neighbor[3] || neighbor[3]->is_transparent(y, z, 15) : is_transparent(y, z, x - 1)) rst |= (int)FaceType::right;
+    if (y == high_map[x][z]-1 || is_transparent(y + 1, z, x)) rst |= (int)FaceType::top;
     if (y == 0 || is_transparent(y - 1, z, x)) rst |= (int)FaceType::bottom;
     return rst;
 }
@@ -78,7 +83,7 @@ void Chunk::update_neighbors() {
 }
 
 void Chunk::new_neighbor(int y, int z, int x) {
-    if (y < blocks.size() - 1 && is_renderable(y+1, z, x))
+    if (y < high_map[x][z] - 1 && is_renderable(y+1, z, x))
         blocks[y+1][z][x].neighbors ^= (int)FaceType::bottom;
     if (y > 0 && is_renderable(y-1, z, x))
         blocks[y-1][z][x].neighbors ^= (int)FaceType::top;
@@ -90,6 +95,19 @@ void Chunk::new_neighbor(int y, int z, int x) {
         blocks[y][z][x+1].neighbors ^= (int)FaceType::right;
     if (x > 0 && is_renderable(y, z, x-1))
         blocks[y][z][x-1].neighbors ^= (int)FaceType::left;
+    if (z == 15 && neighbor[1] && neighbor[1]->is_renderable(y, 0, x)) {
+        neighbor[1]->blocks[y][0][x].neighbors ^= (int) FaceType::front;
+        neighbor[1]->is_dirty = true;
+    } else if (z == 0 && neighbor[2] && neighbor[2]->is_renderable(y, 15, x)) {
+        neighbor[2]->blocks[y][15][x].neighbors ^= (int) FaceType::back;
+        neighbor[2]->is_dirty = true;
+    } if (x == 15 && neighbor[0] && neighbor[0]->is_renderable(y, z, 0)) {
+        neighbor[0]->blocks[y][z][0].neighbors ^= (int) FaceType::right;
+        neighbor[0]->is_dirty = true;
+    } else if (x == 0 && neighbor[3] && neighbor[3]->is_renderable(y, z, 15)) {
+        neighbor[3]->blocks[y][z][15].neighbors ^= (int) FaceType::left;
+        neighbor[3]->is_dirty = true;
+    }
 }
 
 void Chunk::get_block_face(int y, int z, int x, FaceMask mask, std::vector<Face>& faces) const {

@@ -453,16 +453,16 @@ struct mat;
 template <class T, unsigned int N>
 struct vec {
     constexpr vec(T a) {for (auto& i : asArray) i = a;}
-    
+
     template <class...Args,
-    class = utils::enable_if_t<(sizeof...(Args) == N) && (utils::is_same_v<T, decltype(T(Args{}))> && ...)>>
+        class = utils::enable_if_t<(sizeof...(Args) == N) && (utils::is_same_v<T, decltype(T(Args{}))> && ...)>>
     constexpr vec(Args&&... args) {
         T v[]{static_cast<T>(args)...};
         for (int i = 0; i < N; i++) asArray[i] = v[i];
     }
-    
+
     T asArray[N]{}; // data
-    
+
     VEC_MEM_FUNC_IMPL(N)
 };
 
@@ -471,14 +471,14 @@ template <class T> struct vec<T, 0> {};
 template <class T>
 struct vec<T, 1> {
     constexpr vec(T x) : x{x} {}
-    
+
     union {
         struct { T x; };
         struct { T r; };
         struct { T i; };
         T asArray[1]{};
     };
-    
+
     VEC_MEM_FUNC_IMPL(1)
 };
 
@@ -486,14 +486,14 @@ template <class T>
 struct vec<T, 2> {
     constexpr vec(T a) : x{a}, y{a} {}
     constexpr vec(T x, T y) : x{x}, y{y} {}
-    
+
     union {
         struct { T x, y; };
         struct { T r, g; };
         struct { T i, j; };
         T asArray[2]{};
     };
-    
+
     VEC_MEM_FUNC_IMPL(2)
 };
 
@@ -501,14 +501,14 @@ template <class T>
 struct vec<T, 3> {
     constexpr vec(T a) : x{a}, y{a}, z{a} {}
     constexpr vec(T x, T y, T z) : x{x}, y{y}, z{z} {}
-    
+
     union {
         struct { T x, y, z; };
         struct { T r, g, b; };
         struct { T i, j, k; };
         T asArray[3]{};
     };
-    
+
     VEC_MEM_FUNC_IMPL(3)
 };
 
@@ -516,14 +516,14 @@ template <class T>
 struct vec<T, 4> {
     constexpr vec(T a) : x{a}, y{a}, z{a}, w{a} {}
     constexpr vec(T x, T y, T z, T w) : x{x}, y{y}, z{z}, w{w} {}
-    
+
     union {
         struct { T x, y, z, w; };
         struct { T r, g, b, a; };
         struct { T i, j, k, l; };
         T asArray[4]{};
     };
-    
+
     VEC_MEM_FUNC_IMPL(4)
 };
 
@@ -577,6 +577,12 @@ vec<T, N> operator*(T k, vec<T, N> v) {
     return v * k;
 }
 
+template <class T, unsigned int N>
+auto operator%(vec<T, N> v, T k) -> utils::remove_cvref_t<decltype(v[0] % k, v)> {
+    for (auto&& i : v) i %= k;
+    return v;
+}
+
 #undef VEC_MEM_FUNC_IMPL // prevent duplicate code
 
 // normal vec type
@@ -609,30 +615,30 @@ struct mat {
     constexpr mat(const vec<Ty, H> (&e)[W]) {
         for (int i = 0; i < W; i++) element[i] = e[i];
     }
-    
+
     template <class...Args,
-              class = utils::enable_if_t<(utils::is_same_v<utils::remove_cvref_t<Args>,
-                                          vec<Ty, H>> && ...)>>
+        class = utils::enable_if_t<(utils::is_same_v<utils::remove_cvref_t<Args>,
+            vec<Ty, H>> && ...)>>
     constexpr mat(Args...args) {
         static_assert(sizeof...(Args) && sizeof...(Args) <= W, "illegal number of parameters");
         const vec<Ty, H> v[]{args...};
         for (int i = 0; i < sizeof...(Args); i++) element[i] = v[i];
     } // imitation aggregate initialization
-    
+
     template <unsigned int W1, unsigned int H1>
     constexpr mat(const mat<Ty, W1, H1>& o) {
         for (int i = 0; i < min(W, W1); i++)
             element[i] = o[i];
     }
-    
-    vec<Ty, H> element[W]; // data
-    
+
+    vec<Ty, H> element[W]{}; // data
+
     auto value_ptr() {return element->value_ptr();} // non-const
     auto value_ptr() const {return element->value_ptr();}
-    
+
     auto& operator[](unsigned int w) {return element[w];} // non-const
     const auto& operator[](unsigned int w) const {return element[w];}
-    
+
     mat<Ty, W, H>& operator+=(const mat<Ty, W, H>& o) {
         for (int i = 0; i < W; i++)
             element[i] += o[i];
@@ -642,13 +648,13 @@ struct mat {
         auto t = *this;
         return t += o;
     }
-    
+
     mat<Ty, W, H>& operator*=(Ty k) {
         for (auto& i : element)
             i *= k;
         return *this;
     }
-    mat<Ty, W, H> operator*(Ty k) {
+    mat<Ty, W, H> operator*(Ty k) const {
         auto t = *this;
         return t *= k;
     }
@@ -657,11 +663,11 @@ struct mat {
             i /= k;
         return *this;
     }
-    mat<Ty, W, H> operator/(Ty k) {
+    mat<Ty, W, H> operator/(Ty k) const {
         auto t = *this;
         return t /= k;
     }
-    
+
     mat<Ty, H, W> transposed() const {
         mat<Ty, H, W> r;
         for(int i=0; i<W; i++)
@@ -670,7 +676,7 @@ struct mat {
         return r;
     }
     mat<Ty, H, W> T() const {return transposed();}
-    
+
     mat<Ty, W-1, H-1> cofactor(int x, int y) const {
         mat<Ty, W-1, H-1> r(0.f);
         for(int i=0, rx=0; i<W; i++) {
@@ -683,14 +689,14 @@ struct mat {
         }
         return r;
     } // 余子式
-    
+
     Ty trace() const {
         Ty r;
         for (int i = 0; i < min(W, H); i++)
             r += element[i][i];
         return r;
     }
-    
+
     unsigned int    size()      const   {   return W;                   }
     auto            begin()             {   return element;             }
     auto            end()               {   return element + size();    }
@@ -698,12 +704,12 @@ struct mat {
     auto            cend()      const   {   return element + size();    }
     auto            begin()     const   {   return cbegin();            }
     auto            end()       const   {   return cend;                }
-    
+
     static constexpr mat<Ty, W, H> zero() {return {(void*)0, (void*)0};}
-    
+
 private:
     constexpr mat(void*, void*) {}
-    
+
 };
 
 // normal mat type
@@ -717,7 +723,7 @@ using dmat4 = mat<double, 4, 4>;
 
 template<class T, unsigned int W, unsigned int H, unsigned int M>
 constexpr mat<T, W, H> operator*(const mat<T, M, H>& m1, const mat<T, W, M>& m2) {
-    mat<T, W, H> r{T{0}};
+    mat<T, W, H> r{};
     for (int i=0; i<H; i++)
         for (int j=0; j<W; j++)
             for (int k=0; k<M; k++)
@@ -727,7 +733,7 @@ constexpr mat<T, W, H> operator*(const mat<T, M, H>& m1, const mat<T, W, M>& m2)
 
 template<class T, unsigned int H, unsigned int N>
 constexpr vec<T, H> operator*(const mat<T, N, H>& m, const vec<T, N>& v) {
-    vec<T, H> r{T{0}};
+    vec<T, H> r{};
     for (int i = 0; i < H; i++)
         for (int j = 0; j < N; j++)
             r[i] += m[j][i] * v[j];
@@ -752,24 +758,24 @@ struct qua{
     qua(T s, vec<T, 3> v) : w(s), x(v.x), y(v.y), z(v.z) {}
     qua(vec<T, 3> u, angle_t angle) : qua<T>(T{cos(angle / 2)}, T{sin(angle / 2)} * u) {}
     qua(EulerAngle angles, EARS sequence);
-    
+
     union {
         struct { T w, x, y, z; };
         struct { T l, i, j, k; };
         T asArray[4];
     };
-    
+
     operator vec<T, 4>() const {
         return {x, y, z, w};
     }
-    
+
     T length_squared() const {return w*w + x*x + y*y + z*z;}
     T length() const {return sqrt(length_squared());}
     qua<T>& normalize() {return *this /= length();}
     qua<T> normalized() const {return *this / length();}
     qua<T> conjugate() const {return {w, -vec<T, 3>{x, y, z}};}
     qua<T> inverse() const {return conjugate() / (length_squared());}
-    
+
     qua<T> operator+() const {return *this;}
     qua<T> operator-() const {return qua<T>(T(0)) - *this;}
     qua<T> operator+(T k) const {return qua<T>(x + k, y + k, z + k, w + k);};
@@ -811,7 +817,7 @@ template <class T>
 qua<T>::qua(EulerAngle angles, EARS sequence) {
     angle_t p = angles[0], y = angles[1], r = angles[2];
     auto& rs = *this;
-    
+
 #define PMAT qua<T>(vec<T, 3>{1, 0, 0}, p)
 #define YMAT qua<T>(vec<T, 3>{0, 1, 0}, y)
 #define RMAT qua<T>(vec<T, 3>{0, 0, 1}, r)
@@ -922,7 +928,7 @@ constexpr T dot(qua<T> a, qua<T> b) {
 
 template <class T>
 constexpr vec<T, 3> cross(vec<T, 3> v1, vec<T, 3> v2){
-    mat<T, 3, 3> r{T{0}};
+    auto r = mat<T, 3, 3>::zero();
     r[2][1]-= r[1][2] = v1.x;
     r[2][0]-= r[0][2]-= v1.y;
     r[1][0]-= r[0][1] = v1.z;
@@ -993,7 +999,7 @@ mat<T, N, N> adjugate(const mat<T, N, N>& m) {
     for(unsigned int i = 0; i < N; ++i)
         for(unsigned int j = 0; j < N; ++j)
             r[j][i] = determinant<T, N-1>(m.cofactor(i, j))
-                * (i%2 ? -1 : 1) * (j%2 ? -1 : 1);
+                      * (i%2 ? -1 : 1) * (j%2 ? -1 : 1);
     return r;
 }
 
@@ -1012,7 +1018,7 @@ mat<T, N+1, N+1> translate(vec<T, N> v, mat<T, N+1, N+1> ori = {}) {
 
 template <class T = float> // this might be unable to derive
 mat<T, 3, 3> rotate(angle_t angle, mat<T, 3, 3> ori = {}) {
-    mat<T, 3, 3> r{T{0}};
+    auto r = mat<T, 3, 3>::zero();
     r[0][0] = r[1][1] = cos(angle);
     r[0][1]-= r[1][0]-= sin(angle);
     return r * ori;
@@ -1023,14 +1029,14 @@ mat<T, 4, 4> rotate(vec<T, 3> axis, angle_t angle, mat<T, 4, 4> ori = {}) {
     const T& x = axis.x, y = axis.y, z = axis.z;
     angle_t sa = sin(angle), ca = cos(angle);
     angle_t bca = 1 - ca;
-    
+
     mat<T, 4, 4> r = {
         vec<T, 4>(ca + x*x*bca, sa*z + bca*x*y, -sa*y + bca*x*z, 0),
         vec<T, 4>(-sa*z + bca*x*y, ca + y*y*bca, sa*x + bca*y*z, 0),
         vec<T, 4>(sa*y + bca*x*z, -sa*x + bca*y*z, ca + z*z*bca, 0),
         vec<T, 4>(0, 0, 0, 1)
     };
-    
+
     return r * ori;
 }
 
@@ -1038,7 +1044,7 @@ template <class T>
 mat<T, 4, 4> rotate(EulerAngle angles, EARS sequence, mat<T, 4, 4> ori = {}){
     angle_t p = angles[0], y = angles[1], r = angles[2];
     mat4 rs(1);
-    
+
 #define PMAT rotate(vec<T, 3>{1, 0, 0}, p)
 #define YMAT rotate(vec<T, 3>{0, 1, 0}, y)
 #define RMAT rotate(vec<T, 3>{0, 0, 1}, r)
@@ -1083,7 +1089,7 @@ mat<T, 4, 4> rotate(EulerAngle angles, EARS sequence, mat<T, 4, 4> ori = {}){
 #undef PMAT
 #undef YMAT
 #undef RMAT
-    
+
     return rs * ori;
 }
 
@@ -1183,7 +1189,7 @@ template <class T>
 qua<T> slerp(const qua<T>& a, const qua<T>& b, T t) {
     auto g = acos(dot(a, b));
     auto sg = sin(g);
-    
+
     return a*(sin(g*(1-t))/sg) + b*(sin(g*t)/sg);
 }
 
@@ -1196,7 +1202,7 @@ template <class T, unsigned int N>
 vec<unsigned int, N> argsort(const vec<T, N>& v) {
     vec<unsigned int, N> r;
     for (unsigned int i = 0; i < N; ++i) r[i] = i;
-    
+
     for (unsigned int gap = N >> 1; gap > 0; gap >>= 1)
         for (unsigned int i = gap; i < N; i++) {
             int temp = r[i], j;
@@ -1204,7 +1210,7 @@ vec<unsigned int, N> argsort(const vec<T, N>& v) {
                 r[j + gap] = r[j];
             r[j + gap] = temp;
         }
-    
+
     return r;
 }
 
@@ -1273,11 +1279,11 @@ eigen_result<T, N> eigen(mat<T, N, N> A, int iter_max_num = 114514, T eps = T(1e
             E[k][col] = Ekj*cos_theta - Eki*sin_theta;
         }
     }
-    
+
     //update e
     for(int i = 0; i < N; i++)
         e[i] = A[i][i];
-    
+
     // sort E by e
     auto sort_index = argsort(e);
     // initialize E_sorted, e_sorted
@@ -1291,10 +1297,10 @@ eigen_result<T, N> eigen(mat<T, N, N> A, int iter_max_num = 114514, T eps = T(1e
     }
     E = E_sorted.T();
     e = e_sorted;
-    
+
     while(res.rank < e.size() && e[res.rank] > 0)
         res.rank++;
-    
+
     return res;
 }
 
@@ -1302,21 +1308,21 @@ template <class T, unsigned int W, unsigned int H>
 struct SVD {
     SVD(const mat<T, W, H>& A) {
         auto egn = eigen(A.T() * A);
-        
+
         //确定V
         V = egn.vectors;
-        
+
         //确定S
         for(int i = 0; i < egn.rank; i++)
             S[i][i] = sqrt(egn.values[i]);
-        
+
         //确定U
         mat<T, H, W> Sinv;
         for(int i = 0; i < egn.rank; i++)
             Sinv[i][i] = T(1) / S[i][i];
         U = A * V * Sinv;
     }
-    
+
     mat<T, H, H> U;
     mat<T, W, H> S;
     mat<T, W, W> V;
@@ -1324,32 +1330,35 @@ struct SVD {
 
 namespace random {
 
-struct rand_sequence {
+struct rand_seq {
+    rand_seq(unsigned int seedBase, unsigned int seedOffset) {
+        m_index = permuteQPR(permuteQPR(seedBase) + 0x682f0161);
+        m_intermediateOffset = permuteQPR(permuteQPR(seedOffset) + 0x46790905);
+    }
+    rand_seq(unsigned int seed) : rand_seq(seed, seed + 1) {}
+
+    unsigned int next() {
+        return permuteQPR((permuteQPR(m_index++) + m_intermediateOffset) ^ 0x5bf03635);
+    }
+
+    unsigned int operator()() {
+        return next();
+    }
+
+    unsigned int operator[](unsigned int n) const {
+        return permuteQPR((permuteQPR(m_index + n) + m_intermediateOffset) ^ 0x5bf03635);
+    }
+
 private:
     unsigned int m_index;
     unsigned int m_intermediateOffset;
 
     static unsigned int permuteQPR(unsigned int x) {
-        static const unsigned int prime = 4294967291u;
+        constexpr auto prime = 4294967291u;
         if (x >= prime)
             return x;  // The 5 integers out of range are mapped to themselves.
         unsigned int residue = ((unsigned long long) x * x) % prime;
         return (x <= prime / 2) ? residue : prime - residue;
-    }
-
-public:
-    rand_sequence(unsigned int seedBase, unsigned int seedOffset) {
-        m_index = permuteQPR(permuteQPR(seedBase) + 0x682f0161);
-        m_intermediateOffset = permuteQPR(permuteQPR(seedOffset) + 0x46790905);
-    }
-    rand_sequence(unsigned int seed) : rand_sequence(seed, seed + 1) {}
-
-    unsigned int next() {
-        return permuteQPR((permuteQPR(m_index++) + m_intermediateOffset) ^ 0x5bf03635);
-    }
-    
-    unsigned int operator()() {
-        return next();
     }
 };
 
@@ -1359,15 +1368,15 @@ struct mt19937 {
         for(int i=1;i<624;i++)
             mt[i] = static_cast<unsigned int>(1812433253 * (mt[i - 1] ^ mt[i - 1] >> 30) + i);
     }
-    
+
     unsigned int operator()() {
         return extract_number();
     }
-    
+
 private:
     unsigned int mt[624];
     unsigned int mti{0};
-    
+
     unsigned int extract_number() {
         if(mti == 0) twist();
         unsigned long long y = mt[mti];
@@ -1378,7 +1387,7 @@ private:
         mti = (mti + 1) % 624;
         return static_cast<unsigned int>(y);
     }
-    
+
     void twist() {
         for(int i=0;i<624;i++) {
             // 高位和低位级联
@@ -1391,14 +1400,14 @@ private:
 
 struct xor_shift32 {
     xor_shift32(unsigned int seed) : s(seed) {}
-    
+
     unsigned int operator()() {
         s ^= s << 13;
         s ^= s >> 17;
         s ^= s << 5;
         return s;
     }
-    
+
 private:
     unsigned int s;
 };
@@ -1406,12 +1415,12 @@ private:
 template<class T>
 struct uniform_real_distribution {
     uniform_real_distribution(T a, T b) : a(a), b(b) {}
-    
+
     template<class E>
     T operator()(E& e) const {
         return a + (b - a) * e() / 0xffffffff;
     }
-    
+
 private:
     T a, b;
 };
@@ -1419,12 +1428,12 @@ private:
 template<class T>
 struct uniform_int_distribution {
     uniform_int_distribution(T a, T b) : a(a), b(b) {}
-    
+
     template<class E>
     T operator()(E& e) const {
         return (e() % (b - a)) + a;
     }
-    
+
 private:
     T a, b;
 };
@@ -1434,7 +1443,7 @@ static xor_shift32 g_rand_engine{114514 ^ 1919810};
 inline void seed(unsigned int s) {
     g_rand_engine = {s};
 }
- 
+
 inline unsigned int rand() {
     return g_rand_engine();
 }
@@ -1458,7 +1467,7 @@ T rand11() {
 template <class T, unsigned int N>
 struct rand_vec_fn {
     constexpr rand_vec_fn() = default;
-    
+
     /**
      * \result a normalized random vector
      */
@@ -1485,37 +1494,37 @@ struct FastPoissonDiscSampling {
     FastPoissonDiscSampling(vec<T, 2> range, T radius, E engine) : e(engine) {
         points = new vec<T, 2>[static_cast<unsigned>(range.x * range.y / (radius * radius))]{};
         auto& psize = this->size = 0;
-        
+
         auto push_point = [&](auto&& p) -> unsigned int {
             points[psize] = p;
             return psize++;
         };
-        
+
         constexpr int max_retry = 20;
-        
+
         auto cell_size = radius / 1.4142135623730951;
         uivec2 grid_size = {
             static_cast<unsigned int>(ceil(range.x / cell_size)),
             static_cast<unsigned int>(ceil(range.y / cell_size))
         };
-        
+
         int** grid = new int*[grid_size.x];
         for (int i = 0; i < grid_size.x; i++) {
             grid[i] = new int[grid_size.y];
             for (int j = 0; j < grid_size.y; j++)
                 grid[i][j] = -1;
         }
-        
+
         auto find_point_grid = [&](auto&& p) -> uivec2 {
             unsigned int col = p.x / cell_size;
             unsigned int row = p.y / cell_size;
             return {col, row};
         };
-        
+
         auto start = vec<T, 2>{Range(range.x), Range(range.y)};
         auto pos = find_point_grid(start);
         auto start_key = grid[pos.x][pos.y] = push_point(start);
-        
+
         struct Node {
             int key;
             Node *p, *n = 0;
@@ -1524,7 +1533,7 @@ struct FastPoissonDiscSampling {
         auto active_list = new Node{start_key, 0, active_end};
         active_end->p = active_list;
         unsigned int active_size = 1;
-        
+
         auto push_active = [&](auto&& key){
             auto p = new Node{0, active_end};
             active_end->n = p;
@@ -1545,12 +1554,12 @@ struct FastPoissonDiscSampling {
             while (n--) r = r->n;
             return r;
         };
-        
+
         while (active_size > 0) {
             auto active = rand_active();
             auto point = points[active->key];
             bool found = false;
-            
+
             for (int i = 0; i < max_retry; i++) {
                 auto dir = InsideUnitSphere();
                 auto new_point = point + dir.normalized() * radius + dir * radius;
@@ -1558,11 +1567,11 @@ struct FastPoissonDiscSampling {
                     (new_point.y < 0 || new_point.y >= range.y)) {
                     continue;
                 }
-                
+
                 auto pos = find_point_grid(new_point);
                 if (grid[pos.x][pos.y] != -1)
                     continue;
-                
+
                 bool ok = true;
                 int min_r = floor((new_point.x - radius) / cell_size);
                 int max_r = floor((new_point.x + radius) / cell_size);
@@ -1586,51 +1595,44 @@ struct FastPoissonDiscSampling {
                         }
                     }
                 }();
-                
+
                 if (ok) {
                     push_active(grid[pos.x][pos.y] = push_point(new_point));
                     found = true;
                     break;
                 }
             }
-            
+
             if (!found) {
                 erase_active(active);
             }
         }
-        
+
         delete active_list;
         for (int i = 0; i < grid_size.x; i++)
             delete[] grid[i];
         delete[] grid;
     }
-    
+
     vec<T, 2> InsideUnitSphere() {
-        uniform_real_distribution<T> d{0, 1};
         T theta = d(e) * pi<T>() * 4;
         T r = d(e);
         return vec<T, 2>(cos(theta), sin(theta)) * sqrt(r);
     }
-    
-    T Range(T n) {
-        return uniform_real_distribution<T>{0, n}(e);
-    }
-    
-    FastPoissonDiscSampling(const FastPoissonDiscSampling&) = delete;
-    FastPoissonDiscSampling& operator=(const FastPoissonDiscSampling&) = delete;
-    
-    ~FastPoissonDiscSampling() {
-        delete[] points;
-    }
-    
+
+    T Range(T n) {return uniform_real_distribution<T>{0, n}(e);}
+
+    ~FastPoissonDiscSampling() { delete[] points; }
+    FastPoissonDiscSampling(FastPoissonDiscSampling&&) = delete;
+
     auto begin() const {return points;}
     auto end() const {return points + size;}
-    
+
     vec<T, 2>* points;
     unsigned int size;
-    
+
+    uniform_real_distribution<T> d{0, 1};
     E e;
-    
 };
 
 }

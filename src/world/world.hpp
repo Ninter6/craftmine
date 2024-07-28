@@ -9,7 +9,7 @@
 #include <unordered_set>
 
 #include "chunk.hpp"
-#include "generator.hpp"
+#include "gen/worldgen.hpp"
 
 #include "math/ray.hpp"
 
@@ -19,9 +19,14 @@
 constexpr int SIGHT_DISTANCE = 2;
 constexpr int WORLD_RADIUS = INT16_MAX;
 
+struct PreloadInfo {
+    int x, y, z; // 0 ~ 15
+    BlockType type;
+};
+
 struct WorldInitInfo {
     std::string name = "test";
-    size_t seed;
+    uint32_t seed;
     Camera* camera;
 };
 
@@ -31,6 +36,8 @@ public:
 
     BlockType get_block(const mathpls::ivec3& pos) const;
     void set_block(const mathpls::ivec3& pos, BlockType type);
+    void push_preload_block(ChunkPos pos, int x, int y, int z, BlockType);
+    void check_preload_block(Chunk& c);
 
     std::optional<mathpls::ivec3> cast_block(Ray ray, bool previous = false) const;
     bool cast_and_set_block(const Ray& ray, BlockType type, bool previous = false);
@@ -39,6 +46,7 @@ public:
 
     void gen_world(ChunkPos min, ChunkPos max);
     void gen_camera_sight();
+    void neighbor_chunk(Chunk& c, ChunkPos npos, int n);
 
     ChunkPos calcu_camera_chunk();
     std::pair<ChunkPos, ChunkPos> get_camera_sight() const;
@@ -49,15 +57,17 @@ public:
     DrawData get_draw_data(); // this will reset chunks' dirty flag
     std::unordered_map<ChunkPos, std::vector<Face>> get_dirty_chunk_data();
 
-    std::optional<Chunk*> is_chunk_initialized(ChunkPos p); // if uninitialized, return nullopt
+    std::optional<Chunk*> is_chunk_initialized(ChunkPos p) const; // if uninitialized, return nullopt
 
 private:
     std::string name;
 
     std::unordered_map<ChunkPos, Chunk> map;
+    std::unordered_multimap<ChunkPos, PreloadInfo> preload_blocks;
 
-    WorldGenerator generator;
+    WorldGen generator;
 
     Camera* cam;
-    ChunkPos camera_chunk{}, last_camera_chunk{};
+    ChunkPos camera_chunk{};
+    std::pair<ChunkPos, ChunkPos> camera_sight, last_camera_sight;
 };

@@ -8,10 +8,15 @@
 
 #include <vector>
 
+#define CHUNK_SIZE (ivec3(16, 0, 16))
+
 struct BlockData {
     BlockType type = BlockType::air;
     FaceMask neighbors = 0b111111;
 };
+
+using Plane = mathpls::mat<BlockData, 16, 16>;
+using Heightmap = mathpls::mat<int, 16, 16>;
 
 struct Chunk {
     Chunk(ChunkPos position = {});
@@ -19,10 +24,10 @@ struct Chunk {
     ChunkPos position;
 
     // 3D array, y - z - x
-    using Plane = mathpls::mat<BlockData, 16, 16>;
     std::vector<Plane> blocks;
+    Chunk* neighbor[4]{}; // chunk neighbors
 
-    mathpls::mat<int, 16, 16> high_map;
+    Heightmap high_map{};
     int max_height{};
 
     bool is_dirty = false;

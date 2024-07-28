@@ -21,7 +21,7 @@ void Renderer::init_shader() {
 }
 
 void Renderer::init_camera(int w, int h) {
-    camera = std::make_unique<Camera>(mathpls::vec3{5, 16, 5}, mathpls::vec3{});
+    camera = std::make_unique<Camera>(mathpls::vec3{5, 64, 5}, mathpls::vec3{});
     camera->setProjPerspective(mathpls::radians(60.f), (float)w / (float)h, .1f, 100.f);
 }
 
@@ -104,6 +104,7 @@ void Renderer::init_event(Window& window, Eventor& eventor) {
     eventor.add_event(evt, [&]() {
         camera->position += camera->forward * .1f;
         camera->is_dirty = true;
+//        std::cout << camera->position.x << " " << camera->position.z << "\n";
     });
     evt.NormalKey = 'S';
     eventor.add_event(evt, [&]() {
@@ -207,7 +208,7 @@ bool Renderer::try_install_chunk(ChunkPos pos, std::span<const Face> face) {
 void Renderer::process_new_chunks(std::span<std::pair<ChunkPos, std::span<const Face>>> new_chunks, const std::pair<ChunkPos, ChunkPos>& visible_range) {
     std::vector<decltype(chunk_map.end())> uninstall_chunks;
     uninstall_chunks.reserve(new_chunks.size());
-    for (auto it = chunk_map.begin(); uninstall_chunks.size() <= new_chunks.size() && it != chunk_map.end(); ++it) {
+    for (auto it = chunk_map.begin(); uninstall_chunks.size() < new_chunks.size() && it != chunk_map.end(); ++it) {
         if (!is_chunk_visible(it->first, visible_range))
             uninstall_chunks.push_back(it);
     }

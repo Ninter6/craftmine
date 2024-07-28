@@ -56,7 +56,11 @@ void Window::init_event() {
         )
     );
 
-    eventor->add_event({{}, {}, 256}, [&]{window.setShouldClose(true);});
+    eventor->add_event({{}, {}, 256}, [&, cur = false](auto&& lsn) mutable {
+        if (!lsn.IsKeyPressed(256)) return;
+        cur = !cur;
+        window.setInputModeCursor(cur ? glfw::CursorMode::Normal : glfw::CursorMode::Disabled);
+    });
 
     renderer->init_event(*this, *eventor);
 }
