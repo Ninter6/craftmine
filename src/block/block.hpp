@@ -49,6 +49,7 @@ struct BlockBase {
     [[nodiscard]] virtual bool renderable() const { return true; }
 
     [[nodiscard]] virtual bool fragmentary() const { return false; } // if one isn't renderable, this should be true
+    [[nodiscard]] virtual bool cast_sunlight() const { return true; }
     [[nodiscard]] virtual bool collidable() const { return true; }
 
     [[nodiscard]] virtual std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const = 0;
@@ -71,7 +72,7 @@ struct Air : BlockBase {
     [[nodiscard]] bool renderable() const override { return false; }
 
     [[nodiscard]] bool fragmentary() const override { return true; }
-
+    [[nodiscard]] bool cast_sunlight() const override { return false; }
     [[nodiscard]] bool collidable() const override { return false; }
 
     [[nodiscard]] std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const override { return {}; }
@@ -189,7 +190,12 @@ struct PineLeaf : Block<PineLeaf> {
     };
 };
 
-struct Grass : Block<Grass> {
+template <class T>
+struct Decoration : Block<T> {
+    [[nodiscard]] bool cast_sunlight() const override { return false; }
+};
+
+struct Grass : Decoration<Grass> {
     [[nodiscard]] bool fragmentary() const override { return true; }
 
     [[nodiscard]] std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const override {
@@ -204,7 +210,7 @@ struct Grass : Block<Grass> {
     };
 };
 
-struct Rose : Block<Rose> {
+struct Rose : Decoration<Rose> {
     [[nodiscard]] bool fragmentary() const override { return true; }
 
     [[nodiscard]] std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const override {
@@ -219,7 +225,7 @@ struct Rose : Block<Rose> {
     };
 };
 
-struct Dandelion : Block<Dandelion> {
+struct Dandelion : Decoration<Dandelion> {
     [[nodiscard]] bool fragmentary() const override { return true; }
 
     [[nodiscard]] std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const override {
@@ -234,7 +240,7 @@ struct Dandelion : Block<Dandelion> {
     };
 };
 
-struct Shrub : Block<Shrub> {
+struct Shrub : Decoration<Shrub> {
     [[nodiscard]] bool fragmentary() const override { return true; }
     [[nodiscard]] std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const override {
         return {faces[0], faces[1], faces[2], faces[3]};

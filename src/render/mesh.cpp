@@ -21,6 +21,7 @@ Buffer::Buffer(GLint type, bool dynamic) : type(type), dynamic(dynamic) {
 }
 
 Buffer::~Buffer() {
+    if (mem_map) unmap();
     glDeleteBuffers(1, &id);
 }
 
@@ -39,11 +40,13 @@ void Buffer::subdata(void *data, size_t offset, size_t length) const {
     glBufferSubData(type, (GLintptr)offset, (GLintptr)length, data);
 }
 
-void* Buffer::map() const {
-    return glMapBuffer(type, GL_WRITE_ONLY);
+void* Buffer::map() {
+    if (mem_map) return mem_map;
+    return (mem_map = glMapBuffer(type, GL_WRITE_ONLY));
 }
 
-void Buffer::unmap() const {
+void Buffer::unmap() {
+    mem_map = nullptr;
     glUnmapBuffer(type);
 }
 

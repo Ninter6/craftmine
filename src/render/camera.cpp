@@ -7,6 +7,44 @@
 Camera::Camera(mathpls::vec3 pos, mathpls::vec3 target)
 : position(pos), forward((target - pos).normalized()) {}
 
+void Camera::init_event(Eventor& eventor) {
+    Event evt{};
+
+    evt.MouseMove = true;
+    eventor.add_event(evt, [&](double x, double y) {
+        auto dt = mathpls::radians(x);
+        auto& [x0, y0, z0] = forward.asArray;
+        x0 = cos(dt)*x0 - sin(dt)*z0;
+        z0 = sin(dt)*x0 + cos(dt)*z0;
+        y0 -= y * .02;
+        forward.normalize();
+    });
+
+    evt.MouseMove = std::nullopt;
+    evt.NormalKey = 'F';
+    eventor.add_event(evt, [&]() {
+        forward = {0, 0, 1};
+    });
+
+    evt.NormalKey = 'W';
+    eventor.add_event(evt, [&]() {
+        position += forward * .1f;
+//        std::cout << camera->position.x << " " << camera->position.z << "\n";
+    });
+    evt.NormalKey = 'S';
+    eventor.add_event(evt, [&]() {
+        position -= forward * .1f;
+    });
+    evt.NormalKey = 'A';
+    eventor.add_event(evt, [&]() {
+        position -= mathpls::cross(forward, {0, 1, 0}).normalized() * .1f;
+    });
+    evt.NormalKey = 'D';
+    eventor.add_event(evt, [&]() {
+        position += mathpls::cross(forward, {0, 1, 0}).normalized() * .1f;
+    });
+}
+
 void Camera::setProjPerspective(float fovy, float aspect, float near, float far) {
     frustum = {fovy, aspect, near, far};
     proj = mathpls::perspective(fovy, aspect, near, far);

@@ -103,9 +103,10 @@ void World::gen_camera_sight() {
 ChunkPos World::calcu_camera_chunk() {
     auto x = (int)cam->position.x;
     auto z = (int)cam->position.z;
+    camera_chunk = {x & ~15, z & ~15};
     last_camera_sight = camera_sight;
     camera_sight = get_camera_sight();
-    return (camera_chunk = {x & ~15, z & ~15});
+    return camera_chunk;
 }
 
 std::pair<ChunkPos, ChunkPos> World::get_camera_sight() const {
@@ -114,7 +115,7 @@ std::pair<ChunkPos, ChunkPos> World::get_camera_sight() const {
     auto u = mathpls::cross(d, r);
     mathpls::mat3 m = {r, u, d};
 
-    auto w = cam->frustum.far * std::tan(cam->frustum.fovy);
+    auto w = SIGHT_DISTANCE * 16 * std::tan(cam->frustum.fovy);
     auto h = w / cam->frustum.asp;
 
     mathpls::vec3 v[4] = {
@@ -165,9 +166,21 @@ void World::calcu_new_chunk_camera_sight() {
 }
 
 void World::update() {
+    ticker.tick();
     calcu_camera_chunk();
     gen_camera_sight();
     calcu_new_chunk_camera_sight();
+}
+
+void calcu_sun(const Ticker& tk, mathpls::vec3& dir, float& I) {
+    float t = (float) tk.now / (float) tk.tick_per_day * 2;
+    if (t > 1) {
+        I = 76.8f * std::pow(t - 1.5f, 8.f) + .2f;
+        t -= 1;
+    } else
+        I = -179.2f * std::pow(t - .5f, 8.f) + 1.2f;
+    dir = {cos(t * 3.1416f), sin(t * 3.1416f), cos(3.14f*tk.day/180)*.3f};
+    dir.normalize();
 }
 
 DrawData World::get_draw_data() {
@@ -177,6 +190,8 @@ DrawData World::get_draw_data() {
     data.dirty_chunk = get_dirty_chunk_data();
 
     data.camera_target_block = camera_target_block(true);
+
+    calcu_sun(ticker, data.sun_dir, data.sun_I);
 
     return data;
 }

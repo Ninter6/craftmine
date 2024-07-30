@@ -131,3 +131,22 @@ std::string CubeShader::fragmentShaderSource() {
         std::istreambuf_iterator<char>{}
     };
 }
+
+SkyShader::SkyShader()
+: Shader(vertexShaderSource(), fragmentShaderSource()) {}
+
+std::string SkyShader::vertexShaderSource() {
+    std::ifstream vert{"/Users/mac/Desktop/temp/craftmine/res/shaders/sky.vert"};
+    return {
+        std::istreambuf_iterator<char>{vert},
+        std::istreambuf_iterator<char>{}
+    };
+}
+
+std::string SkyShader::fragmentShaderSource() {
+    std::ifstream frag{"/Users/mac/Desktop/temp/craftmine/res/shaders/sky.frag"};
+    return {
+        std::istreambuf_iterator<char>{frag},
+        std::istreambuf_iterator<char>{}
+    };
+}

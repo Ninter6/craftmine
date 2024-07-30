@@ -10,9 +10,12 @@
 
 #include "math/mathpls.h"
 
-struct CameraUBO {
+struct UBO {
     mathpls::mat4 proj;
     mathpls::mat4 view;
+
+    mathpls::vec3 sun_dir;
+    float sun_I;
 };
 
 struct color_u32 : mathpls::vec<uint8_t, 4> {
@@ -25,7 +28,7 @@ struct Face {
     int facing{};
     float posOffset{};
     float texIndex{};
-    float lightIntensity = 1.f;
+    float sunIntensity = 1.f;
     uint32_t color = color_u32{255};
 };
 
@@ -47,4 +50,7 @@ struct DrawData {
     std::unordered_map<ChunkPos, std::vector<Face>> dirty_chunk;
     std::pair<ChunkPos, ChunkPos> camera_visible_range;
     std::optional<mathpls::ivec3> camera_target_block;
+
+    mathpls::vec3 sun_dir;
+    float sun_I;
 };

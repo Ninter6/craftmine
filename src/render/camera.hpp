@@ -5,6 +5,7 @@
 #pragma once
 
 #include "math/mathpls.h"
+#include "utils/event.h"
 
 struct Frustum {
     float fovy, asp;
@@ -15,6 +16,8 @@ struct Camera {
     Camera() = default;
     Camera(mathpls::vec3 pos, mathpls::vec3 target);
 
+    void init_event(Eventor& e);
+
     void setProjPerspective(float fovy, float aspect, float near, float far);
     void setProjOrtho(mathpls::vec2 min, mathpls::vec2 max);
 
@@ -22,8 +25,6 @@ struct Camera {
 
     [[nodiscard]] mathpls::mat4 view() const;
     [[nodiscard]] mathpls::mat4 projView() const;
-
-    bool is_dirty = false;
 
     mathpls::vec3 position;
     mathpls::vec3 forward;

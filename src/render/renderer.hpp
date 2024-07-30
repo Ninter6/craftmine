@@ -34,30 +34,39 @@ public:
 private:
     std::unique_ptr<Shader> simple;
     std::unique_ptr<Shader> cube;
+    std::unique_ptr<Shader> sky;
 
     std::unique_ptr<VAO> cube_vao;
     std::unique_ptr<CubeVBO> cube_vbo;
     std::unique_ptr<QuadVBO> quad_vbo;
-    std::unique_ptr<Buffer> cam_ubo;
+    std::unique_ptr<Buffer> ubo;
 
-    static constexpr int MAX_CHUNKS = (SIGHT_DISTANCE*2+1)*(SIGHT_DISTANCE*2+1);
-    std::array<std::unique_ptr<Mesh>, MAX_CHUNKS> chunks;
+    bool main_mesh_update = false;
+    int main_faces = 0;
+    std::unique_ptr<Mesh> main_mesh;
 
-    struct ChunkInfo {
-        int index{};
-        int size{};
+    struct ChunkData {
+        ChunkPos pos;
+        std::vector<Face> faces;
+//        int count = 0; // of the faces render before its
+        int dirty = 0; // 0:clean, 1:modified, 2:size changed
     };
+    static constexpr int MAX_CHUNKS = (SIGHT_DISTANCE*2+1)*(SIGHT_DISTANCE*2+1);
+    std::array<ChunkData, MAX_CHUNKS> chunks;
+
     int installed_chunks = 0;
-    std::unordered_map<ChunkPos, ChunkInfo> chunk_map;
+    std::unordered_map<ChunkPos, int> chunk_map;
 
     std::unique_ptr<Camera> camera;
 
     std::unique_ptr<Texture> block_tex;
+    std::unique_ptr<Texture> sky_transmittance;
 
 private:
-    static void update_chunk(Buffer& chunk, std::span<const Face> face);
+    void update_chunk(ChunkData& chunk, std::span<const Face> new_face);
     void update_chunks(const DrawData& data);
-    void update_camera_ubo();
+    void update_main_mesh(const std::pair<ChunkPos, ChunkPos>& visible_range);
+    void update_ubo(const DrawData& data);
 
     void init_shader();
     void init_camera(int w, int h);

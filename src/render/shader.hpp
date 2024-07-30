@@ -51,3 +51,11 @@ public:
     static std::string vertexShaderSource();
     static std::string fragmentShaderSource();
 };
+
+class SkyShader : public Shader {
+public:
+    SkyShader();
+
+    static std::string vertexShaderSource();
+    static std::string fragmentShaderSource();
+};

@@ -40,7 +40,7 @@ struct Chunk {
     BlockBase* get_block(int y, int z, int x) const;
 
     bool is_renderable(int y, int z, int x) const;
-    bool is_transparent(int y, int z, int x) const;
+    bool is_fragmentary(int y, int z, int x) const;
 
     void update_height_map();
 

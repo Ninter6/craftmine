@@ -29,14 +29,16 @@ struct Buffer {
     void buffer(void *data, size_t offset, size_t size);
     void subdata(void *data, size_t offset, size_t length) const;
 
-    void* map() const;
-    void unmap() const;
+    void* map();
+    void unmap();
 
     size_t size;
 
     GLint type;
     GLuint id;
     bool dynamic;
+
+    void* mem_map = nullptr;
 };
 
 struct QuadVBO : Buffer {

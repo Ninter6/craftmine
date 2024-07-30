@@ -13,7 +13,7 @@
 
 struct Texture {
     Texture() = default;
-    Texture(uint8_t* data, mathpls::ivec2 size);
+    Texture(uint8_t* data, mathpls::ivec2 size, bool linear = false);
 
     ~Texture();
 
@@ -25,7 +25,7 @@ struct Texture {
     mathpls::ivec2 size{};
     GLuint id{};
 
-    static std::unique_ptr<Texture> LoadFromFile(std::string_view file);
+    static std::unique_ptr<Texture> LoadFromFile(std::string_view file, bool linear = false);
 };
 
 struct TextureOneColor : public Texture {

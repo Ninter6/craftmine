@@ -12,6 +12,7 @@
 #include "gen/worldgen.hpp"
 
 #include "math/ray.hpp"
+#include "utils/tick.hpp"
 
 #include "render/camera.hpp"
 #include "render/render_type.hpp"
@@ -64,6 +65,8 @@ private:
 
     std::unordered_map<ChunkPos, Chunk> map;
     std::unordered_multimap<ChunkPos, PreloadInfo> preload_blocks;
+
+    Ticker ticker{50, 12000};
 
     WorldGen generator;
 

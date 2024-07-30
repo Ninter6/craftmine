@@ -1,4 +1,4 @@
-[[CameraUBO,0]]
+[[UBO,0]]
 // [[name,binding]]
 #version 330 core
 
@@ -13,11 +13,13 @@ layout (location = 6) in float lightIntensity;
 layout (location = 7) in vec4 color;
 
 out vec2 fragUV;
-out vec4 fragColor;
+flat out vec4 fragColor;
 
-layout(std140) uniform CameraUBO {
+layout(std140) uniform UBO {
     mat4 proj;
     mat4 view;
+    vec3 sunDir;
+    float sunI;
 };
 
 const float map_size = 12;
@@ -54,6 +56,14 @@ const mat3 FM[6] = mat3[](
         0, 1, 0
     ) // down
 );
+const vec3 N[6] = vec3[6](
+    vec3( 0, 0,-1),
+    vec3( 1, 0, 0),
+    vec3( 0, 0, 1),
+    vec3(-1, 0, 0),
+    vec3( 0, 1, 0),
+    vec3( 0,-1, 0)
+);
 
 void main() {
     vec3 p = vec3(vert.xy, vert.z + posOffset);
@@ -64,5 +74,6 @@ void main() {
     vec2 uvOffset = vec2(fract(g)*map_size, floor(g));
     fragUV = (1.0 - uv + uvOffset) / map_size;
 
-    fragColor = color * lightIntensity;
+    float S = (max(dot(N[facing], sunDir), 0) * 0.4 + 0.6) * sunI * pow(lightIntensity, sunI);
+    fragColor = color * S;
 }
