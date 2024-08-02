@@ -45,11 +45,18 @@ void Chunk::set_block(mathpls::ivec3 pos, BlockType type) {
         } while (!get_block(high_map[pos.x][pos.z] - 1, pos.z, pos.x)->cast_sunlight());
     auto& block = blocks[pos.y][pos.z][pos.x];
     if (block.type == type) return;
-    if (::get_block(type)->fragmentary() != ::get_block(block.type)->fragmentary())
-        new_neighbor(pos.y, pos.z, pos.x);
-    if (::get_block(type)->renderable() && !::get_block(block.type)->renderable())
-        block.neighbors = search_neighbors(pos.y, pos.z, pos.x);
+
+    auto&& o = ::get_block(block.type), n = ::get_block(type);
     block.type = type;
+    if ((o->transparent() && o->fluid()) || (n->transparent() && n->fluid())) {
+        search_neighbors_plus(pos.y, pos.z, pos.x);
+    } else {
+        if ((o->fragmentary() || o->transparent()) != (n->fragmentary() || n->transparent()))
+            new_neighbor(pos.y, pos.z, pos.x);
+        if (::get_block(type)->renderable() && !::get_block(block.type)->renderable())
+            block.neighbors = search_neighbors(pos.y, pos.z, pos.x);
+    }
+
     is_dirty = true;
 }
 
@@ -66,16 +73,53 @@ bool Chunk::is_fragmentary(int y, int z, int x) const {
     return get_block(y, z, x)->fragmentary();
 }
 
+bool Chunk::is_transparent(int y, int z, int x) const {
+    return get_block(y, z, x)->transparent();
+}
+
+bool is_visible_neighbor(BlockType a, BlockType n) {
+    auto&& nb = ::get_block(n);
+    return nb->fragmentary() ||
+          (nb->transparent() && (!nb->fluid() || a != n));
+}
+
 FaceMask Chunk::search_neighbors(int y, int z, int x) const {
+#define BT(y_, z_, x_) (blocks[y_][z_][x_].type)
+#define N_BT(n_, y_, z_, x_) (neighbor[n_]->blocks[y_][z_][x_].type)
     if (y >= high_map[x][z]) return 0b111111;
     FaceMask rst = 0;
-    if (z == 0 ? !neighbor[2] || neighbor[2]->is_fragmentary(y, 15, x) : is_fragmentary(y, z - 1, x)) rst |= (int)FaceType::front;
-    if (z == 15 ? !neighbor[1] || neighbor[1]->is_fragmentary(y, 0, x) : is_fragmentary(y, z + 1, x)) rst |= (int)FaceType::back;
-    if (x == 15 ? !neighbor[0] || neighbor[0]->is_fragmentary(y, z, 0) : is_fragmentary(y, z, x + 1)) rst |= (int)FaceType::left;
-    if (x == 0 ? !neighbor[3] || neighbor[3]->is_fragmentary(y, z, 15) : is_fragmentary(y, z, x - 1)) rst |= (int)FaceType::right;
-    if (y == high_map[x][z]-1 || is_fragmentary(y + 1, z, x)) rst |= (int)FaceType::top;
-    if (y == 0 || is_fragmentary(y - 1, z, x)) rst |= (int)FaceType::bottom;
+    auto a = BT(y, z, x);
+    if (z == 0 ? !neighbor[2] || is_visible_neighbor(a, N_BT(2, y, 15, x)) : is_visible_neighbor(a, BT(y, z - 1, x))) rst |= (int)FaceType::front;
+    if (z == 15 ? !neighbor[1] || is_visible_neighbor(a, N_BT(1, y, 0, x)) : is_visible_neighbor(a, BT(y, z + 1, x))) rst |= (int)FaceType::back;
+    if (x == 15 ? !neighbor[0] || is_visible_neighbor(a, N_BT(0, y, z, 0)) : is_visible_neighbor(a, BT(y, z, x + 1))) rst |= (int)FaceType::left;
+    if (x == 0 ? !neighbor[3] || is_visible_neighbor(a, N_BT(3, y, z, 15)) : is_visible_neighbor(a, BT(y, z, x - 1))) rst |= (int)FaceType::right;
+    if (y == high_map[x][z]-1 || is_visible_neighbor(a, BT(y + 1, z, x))) rst |= (int)FaceType::top;
+    if (y == 0 || is_visible_neighbor(a, BT(y - 1, z, x))) rst |= (int)FaceType::bottom;
     return rst;
+}
+
+void Chunk::search_neighbors_plus(int y, int z, int x) {
+    blocks[y][z][x].neighbors = search_neighbors(y, z, x);
+    if (y < high_map[x][z] - 1 && is_renderable(y+1, z, x))
+        blocks[y+1][z][x].neighbors = search_neighbors(y + 1, z, x);
+    if (y > 0 && is_renderable(y-1, z, x))
+        blocks[y-1][z][x].neighbors = search_neighbors(y - 1, z, x);
+    if (z < 15 && is_renderable(y, z+1, x))
+        blocks[y][z+1][x].neighbors = search_neighbors(y, z + 1, x);
+    else if (neighbor[1] && neighbor[1]->is_renderable(y, 0, x))
+        neighbor[1]->blocks[y][0][x].neighbors = neighbor[1]->search_neighbors(y, 0, x);
+    if (z > 0 && is_renderable(y, z-1, x))
+        blocks[y][z-1][x].neighbors = search_neighbors(y, z - 1, x);
+    else if (neighbor[2] && neighbor[2]->is_renderable(y, 15, x))
+        neighbor[2]->blocks[y][15][x].neighbors = neighbor[2]->search_neighbors(y, 15, x);
+    if (x < 15 && is_renderable(y, z, x+1))
+        blocks[y][z][x+1].neighbors = search_neighbors(y, z, x + 1);
+    else if (neighbor[0] && neighbor[0]->is_renderable(y, z, 0))
+        neighbor[0]->blocks[y][z][0].neighbors = neighbor[0]->search_neighbors(y, z, 0);
+    if (x > 0 && is_renderable(y, z, x-1))
+        blocks[y][z][x-1].neighbors = search_neighbors(y, z, x - 1);
+    else if (neighbor[3] && neighbor[3]->is_renderable(y, z, 15))
+        neighbor[3]->blocks[y][z][15].neighbors = neighbor[3]->search_neighbors(y, z, 15);
 }
 
 void Chunk::update_neighbors() {
@@ -114,31 +158,35 @@ void Chunk::new_neighbor(int y, int z, int x) {
     }
 }
 
+float Chunk::calcu_sun_intensity(int facing, int y, int z, int x) const {
+    int h = 1919810;
+    switch (facing) {
+        case 0:
+            h = z == 0 ? (neighbor[2] ? neighbor[2]->high_map[x][15] : 0) : high_map[x][z-1];
+            break;
+        case 1:
+            h = x == 15 ? (neighbor[0] ? neighbor[0]->high_map[0][z] : 0) : high_map[x+1][z];
+            break;
+        case 2:
+            h = z == 15 ? (neighbor[1] ? neighbor[1]->high_map[x][0] : 0) : high_map[x][z+1];
+            break;
+        case 3:
+            h = x == 0 ? (neighbor[3] ? neighbor[3]->high_map[15][z] : 0) : high_map[x-1][z];
+            break;
+        case 4:
+            h = high_map[x][z] - 1;
+        default:
+            break;
+    }
+    return y < h ? .314f : 1.f;
+}
+
 void Chunk::get_block_face(int y, int z, int x, FaceMask mask, std::vector<Face>& faces) const {
     auto bf = get_block(y, z, x)->get_faces(mask);
     int i = 0;
     while (bf[i]) {
         bf[i]->pos = mathpls::vec3(position) + mathpls::vec3(x, y, z);
-        int h = 1919810;
-        switch (bf[i]->facing) {
-            case 0:
-                h = z == 0 ? (neighbor[2] ? neighbor[2]->high_map[x][15] : 0) : high_map[x][z-1];
-                break;
-            case 1:
-                h = x == 15 ? (neighbor[0] ? neighbor[0]->high_map[0][z] : 0) : high_map[x+1][z];
-                break;
-            case 2:
-                h = z == 15 ? (neighbor[1] ? neighbor[1]->high_map[x][0] : 0) : high_map[x][z+1];
-                break;
-            case 3:
-                h = x == 0 ? (neighbor[3] ? neighbor[3]->high_map[15][z] : 0) : high_map[x-1][z];
-                break;
-            case 4:
-                h = high_map[x][z] - 1;
-            default:
-                break;
-        }
-        bf[i]->sunIntensity = y < h ? .314f : 1.f;
+        bf[i]->sunIntensity = calcu_sun_intensity(bf[i]->facing, y, z, x);
         faces.push_back(*bf[i++]);
     }
 }

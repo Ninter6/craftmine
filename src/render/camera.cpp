@@ -18,30 +18,36 @@ void Camera::init_event(Eventor& eventor) {
         z0 = sin(dt)*x0 + cos(dt)*z0;
         y0 -= y * .02;
         forward.normalize();
+        is_dirty = true;
     });
 
     evt.MouseMove = std::nullopt;
     evt.NormalKey = 'F';
     eventor.add_event(evt, [&]() {
         forward = {0, 0, 1};
+        is_dirty = true;
     });
 
     evt.NormalKey = 'W';
     eventor.add_event(evt, [&]() {
         position += forward * .1f;
+        is_dirty = true;
 //        std::cout << camera->position.x << " " << camera->position.z << "\n";
     });
     evt.NormalKey = 'S';
     eventor.add_event(evt, [&]() {
         position -= forward * .1f;
+        is_dirty = true;
     });
     evt.NormalKey = 'A';
     eventor.add_event(evt, [&]() {
         position -= mathpls::cross(forward, {0, 1, 0}).normalized() * .1f;
+        is_dirty = true;
     });
     evt.NormalKey = 'D';
     eventor.add_event(evt, [&]() {
         position += mathpls::cross(forward, {0, 1, 0}).normalized() * .1f;
+        is_dirty = true;
     });
 }
 

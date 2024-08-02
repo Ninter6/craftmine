@@ -7,6 +7,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "utils/check_gl.h"
+
 std::string ShaderProcessor::process(const std::string &src) {
     auto last = src.rfind("]]");
     if (last == std::string::npos) return src;
@@ -87,6 +89,7 @@ void Shader::use() const {
 }
 
 void Shader::set_texture(std::string_view name, int tex) const {
+    use();
     glUniform1i(glGetUniformLocation(handle, name.data()), tex);
 }
 

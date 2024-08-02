@@ -32,6 +32,18 @@ struct Face {
     uint32_t color = color_u32{255};
 };
 
+struct SpecialFace {
+    mathpls::vec3 pos{};
+    int facing{};
+    float posOffset{};
+    float sunIntensity = 1.f;
+    uint32_t color = color_u32{255};
+
+    float texBegin{};
+    float texEnd{};
+    float RemainTick{};
+};
+
 struct ChunkPos {
     int32_t x, z;
     bool operator==(const ChunkPos& o) const {return x == o.x && z == o.z;}
@@ -48,6 +60,7 @@ struct std::hash<ChunkPos> {
 
 struct DrawData {
     std::unordered_map<ChunkPos, std::vector<Face>> dirty_chunk;
+    std::optional<std::vector<SpecialFace>> special_faces;
     std::pair<ChunkPos, ChunkPos> camera_visible_range;
     std::optional<mathpls::ivec3> camera_target_block;
 

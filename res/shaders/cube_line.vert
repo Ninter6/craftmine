@@ -18,5 +18,5 @@ void main() {
     vec4 worldPos = vec4(pos + position, 1.0);
     gl_Position = proj * view * worldPos;
 
-    fragUV = (uv - 0.5) * 2;
+    fragUV = uv * 2 - 1;
 }

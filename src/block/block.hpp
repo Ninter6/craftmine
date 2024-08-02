@@ -52,7 +52,12 @@ struct BlockBase {
     [[nodiscard]] virtual bool cast_sunlight() const { return true; }
     [[nodiscard]] virtual bool collidable() const { return true; }
 
+    [[nodiscard]] virtual bool special() const { return false; }
+    [[nodiscard]] virtual bool transparent() const { return false; }
+    [[nodiscard]] virtual bool fluid() const { return false; }
+
     [[nodiscard]] virtual std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const = 0;
+    [[nodiscard]] virtual std::array<std::optional<SpecialFace>, 6> get_special_faces(FaceMask mask) const = 0;
 };
 
 template<class T>
@@ -61,6 +66,26 @@ struct Block : BlockBase {
         auto &faces = static_cast<const T *>(this)->faces;
 
         std::array<std::optional<Face>, 6> res;
+        for (int i = 0, j = 0; mask; mask >>= 1, j++)
+            if (mask & 1) res[i++] = faces[j];
+
+        return res;
+    }
+    [[nodiscard]] std::array<std::optional<SpecialFace>, 6> get_special_faces(FaceMask mask) const override {
+        return {};
+    }
+};
+
+template <class T>
+struct SpecialBlock : BlockBase {
+    [[nodiscard]] bool special() const override { return true; }
+    [[nodiscard]] std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const override {
+        return {};
+    }
+    [[nodiscard]] std::array<std::optional<SpecialFace>, 6> get_special_faces(FaceMask mask) const override {
+        auto &faces = static_cast<const T *>(this)->faces;
+
+        std::array<std::optional<SpecialFace>, 6> res;
         for (int i = 0, j = 0; mask; mask >>= 1, j++)
             if (mask & 1) res[i++] = faces[j];
 
@@ -76,6 +101,7 @@ struct Air : BlockBase {
     [[nodiscard]] bool collidable() const override { return false; }
 
     [[nodiscard]] std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const override { return {}; }
+    [[nodiscard]] std::array<std::optional<SpecialFace>, 6> get_special_faces(FaceMask mask) const override { return {}; }
 };
 
 struct GrassBlock : Block<GrassBlock> {
@@ -254,6 +280,8 @@ struct Shrub : Decoration<Shrub> {
 };
 
 struct Water : Block<Water> {
+    [[nodiscard]] bool transparent() const override { return true; }
+    [[nodiscard]] bool fluid() const override { return true; }
     const Face faces[6] = {
         {0, 0, 0, 120},
         {0, 1, 0, 120},

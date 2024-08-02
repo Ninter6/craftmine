@@ -18,7 +18,7 @@ Renderer::Renderer(int w, int h) {
 void Renderer::init_shader() {
     simple = std::make_unique<SimpleShader>();
     cube = std::make_unique<CubeShader>();
-//    sky = std::make_unique<SkyShader>();
+    sky = std::make_unique<SkyShader>();
 }
 
 void Renderer::init_camera(int w, int h) {
@@ -49,6 +49,7 @@ void Renderer::init_chunk_buffers() {
     quad_vbo->bind_attrib();
     constexpr auto size = 16 * 16 * 128 * 3 * sizeof(Face) * MAX_CHUNKS;
     main_mesh->vbo.buffer(nullptr, 0, size);
+    main_mesh->vbo.map();
     glEnableVertexAttribArray(2); // pos
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Face), nullptr);
     glVertexAttribDivisor(2, 1);
@@ -73,9 +74,12 @@ void Renderer::init_texture() {
     block_tex = Texture::LoadFromFile("/Users/mac/Desktop/temp/craftmine/res/images/blocks.png");
     block_tex->bind(0);
 
-//    sky_transmittance = Texture::LoadFromFile("/Users/mac/Desktop/temp/craftmine/res/images/transmittance.jpg", true);
-//    sky_transmittance->bind(1);
-//    sky->set_texture("transmittance", 1);
+    sky_tex = Texture::LoadFromFile("/Users/mac/Desktop/temp/craftmine/res/images/sky.png", true);
+    sky_tex->bind(1);
+    star_tex = Texture::LoadFromFile("/Users/mac/Desktop/temp/craftmine/res/images/star.png", true);
+    star_tex->bind(2);
+    CHECK_GL(sky->set_texture("sky", 1));
+    CHECK_GL(sky->set_texture("star", 2));
 }
 
 void Renderer::init_event(Window& window, Eventor& eventor) {
@@ -92,26 +96,26 @@ void Renderer::render(const DrawData& draw_data) {
     update_main_mesh(draw_data.camera_visible_range);
     update_ubo(draw_data);
 
+    render_bcakground();
     render_pass_3D(draw_data);
 }
 
 void Renderer::render_bcakground() {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // sky pass
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
 
+    sky->use();
+    cube_vao->bind();
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+//    glEnable(GL_BLEND);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 }
 
 void Renderer::render_pass_3D(const DrawData& draw_data) {
-    // sky pass
-//    glDisable(GL_DEPTH_TEST);
-//    glEnable(GL_CULL_FACE);
-//    glCullFace(GL_FRONT);
-//
-//    sky->use();
-//    cube_vao->bind();
-//    glDrawArrays(GL_TRIANGLES, 0, 36);
-
     // scene pass
     glEnable(GL_DEPTH_TEST);
     glCullFace(GL_BACK);
@@ -147,7 +151,7 @@ Camera* Renderer::getCamera() const{
 }
 
 void Renderer::update_chunk(Renderer::ChunkData& chunk, std::span<const Face> new_face) {
-    if (chunk.faces.size() == new_face.size())
+    if (chunk.faces.size() == new_face.size() && chunk.dirty < 2)
         chunk.dirty = 1;
     else
         chunk.dirty = 2;
@@ -164,6 +168,7 @@ void Renderer::update_ubo(const DrawData& data) {
         data.sun_I
     };
     std::memcpy(ubo->mem_map, &ubo_data, sizeof(ubo_data));
+    camera->is_dirty = false;
 }
 
 void Renderer::update_chunks(const DrawData& data) {
@@ -219,11 +224,14 @@ void Renderer::update_main_mesh(const std::pair<ChunkPos, ChunkPos>& visible_ran
 
     bool has_dirty = false;
     for (auto& c : chunks) {
-        if (has_dirty && !is_chunk_visible(c.pos, visible_range)) continue;
+        if (has_dirty && !is_chunk_visible(c.pos, visible_range)) {
+            c.dirty = 2;
+            continue;
+        }
         if (has_dirty || c.dirty) {
-            main_mesh->vbo.subdata((void*) c.faces.data(),
-                                   main_faces * sizeof(Face),
-                                   c.faces.size() * sizeof(Face));
+            std::memcpy((Face*) main_mesh->vbo.mem_map + main_faces,
+                        c.faces.data(),
+                        c.faces.size() * sizeof(Face));
             if (c.dirty > 1) has_dirty = true;
             c.dirty = 0;
         }

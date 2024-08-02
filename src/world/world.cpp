@@ -101,11 +101,13 @@ void World::gen_camera_sight() {
 }
 
 ChunkPos World::calcu_camera_chunk() {
-    auto x = (int)cam->position.x;
-    auto z = (int)cam->position.z;
-    camera_chunk = {x & ~15, z & ~15};
     last_camera_sight = camera_sight;
-    camera_sight = get_camera_sight();
+    if (!cam->is_dirty) {
+        auto x = (int) cam->position.x;
+        auto z = (int) cam->position.z;
+        camera_chunk = {x & ~15, z & ~15};
+        camera_sight = get_camera_sight();
+    }
     return camera_chunk;
 }
 

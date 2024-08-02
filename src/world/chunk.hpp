@@ -41,12 +41,16 @@ struct Chunk {
 
     bool is_renderable(int y, int z, int x) const;
     bool is_fragmentary(int y, int z, int x) const;
+    bool is_transparent(int y, int z, int x) const;
 
     void update_height_map();
 
     FaceMask search_neighbors(int y, int z, int x) const;
+    void search_neighbors_plus(int y, int z, int x);
     void update_neighbors();
     void new_neighbor(int y, int z, int x); // reverse the neighbor value of blocks around the center block
+
+    float calcu_sun_intensity(int facing, int y, int z, int x) const;
 
     void get_block_face(int y, int z, int x, FaceMask mask, std::vector<Face>& faces) const;
 

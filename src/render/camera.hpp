@@ -26,6 +26,8 @@ struct Camera {
     [[nodiscard]] mathpls::mat4 view() const;
     [[nodiscard]] mathpls::mat4 projView() const;
 
+    bool is_dirty = false;
+
     mathpls::vec3 position;
     mathpls::vec3 forward;
 

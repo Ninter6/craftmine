@@ -11,12 +11,13 @@ flat out vec3 camDir;
 flat out vec3 camPos;
 
 flat out vec3 sunDir;
+flat out float sunI;
 
 layout(std140) uniform UBO {
     mat4 proj;
     mat4 view;
     vec3 sunDir_;
-    float sunI;
+    float sunI_;
 };
 
 void getCamPosDir() {
@@ -28,6 +29,7 @@ void getCamPosDir() {
 void main() {
     getCamPosDir();
     sunDir = sunDir_;
-    fragDir = pos * 2 - 1;
-    gl_Position = vec4(fragDir, 1.0);
+    sunI = sunI_;
+    fragDir = pos - 0.5;
+    gl_Position = proj * vec4(mat3(view) * fragDir, 1.0);
 }

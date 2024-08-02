@@ -19,8 +19,8 @@ Window::Window(const WindowInfo& info) : size(info.extent) {
 void Window::init_window(const WindowInfo& info) {
     glfw::WindowHints{
         .samples = 4,
-        .contextVersionMajor = 3,
-        .contextVersionMinor = 3,
+        .contextVersionMajor = 4,
+        .contextVersionMinor = 1,
 #ifdef __APPLE__
         .openglForwardCompat = true,
 #endif
@@ -40,6 +40,8 @@ void Window::init_window(const WindowInfo& info) {
         std::cerr << "Failed to initialize GLAD" << std::endl;
         std::terminate();
     }(), 0);
+    GLint maxTextureSize;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
     glViewport(0, 0, size.x, size.y);
 }
 
@@ -66,6 +68,9 @@ void Window::init_event() {
 }
 
 void Window::loop() {
+    using cl = std::chrono::high_resolution_clock;
+    auto t = cl::now();
+    int count = 0;
     while (!window.shouldClose()) {
         eventor->Update();
 
@@ -76,6 +81,13 @@ void Window::loop() {
 
         window.swapBuffers();
         glfw::pollEvents();
+
+        count++;
+        if ((cl::now() - t).count() > 1e9) {
+            std::printf("\rFPS: %d", count);
+            t = cl::now();
+            count = 0;
+        }
     }
 }
 

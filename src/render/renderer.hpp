@@ -49,7 +49,7 @@ private:
         ChunkPos pos;
         std::vector<Face> faces;
 //        int count = 0; // of the faces render before its
-        int dirty = 0; // 0:clean, 1:modified, 2:size changed
+        int dirty = 0; // 0:clean, 1:modified, 2:buffer invalid
     };
     static constexpr int MAX_CHUNKS = (SIGHT_DISTANCE*2+1)*(SIGHT_DISTANCE*2+1);
     std::array<ChunkData, MAX_CHUNKS> chunks;
@@ -60,7 +60,8 @@ private:
     std::unique_ptr<Camera> camera;
 
     std::unique_ptr<Texture> block_tex;
-    std::unique_ptr<Texture> sky_transmittance;
+    std::unique_ptr<Texture> sky_tex;
+    std::unique_ptr<Texture> star_tex;
 
 private:
     void update_chunk(ChunkData& chunk, std::span<const Face> new_face);
