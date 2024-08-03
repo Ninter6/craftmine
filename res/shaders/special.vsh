@@ -70,9 +70,9 @@ const vec3 N[6] = vec3[6](
 
 void calcu_uv() {
     float t = fract(acos(normalize(sunDir.xy).x) / 3.141593f * tick_per_half_day / remain);
-    float g = mix(firstTex, lastTex, t);
+    float g = mix(firstTex, lastTex + 1, t);
     float fg = floor(g);
-    float cg = ceil(g);
+    float cg = ceil(g) > lastTex ? firstTex : ceil(g);
     tex_t = g - fg;
     vec2 uv1 = vec2(fract(fg / map_size)*map_size, floor(fg / map_size));
     vec2 uv2 = vec2(fract(cg / map_size)*map_size, floor(cg / map_size));

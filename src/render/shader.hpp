@@ -69,3 +69,19 @@ public:
     static std::string vertexShaderSource();
     static std::string fragmentShaderSource();
 };
+
+class CompositeShader : public Shader {
+public:
+    CompositeShader();
+
+    static std::string vertexShaderSource();
+    static std::string fragmentShaderSource();
+};
+
+class UIShader : public Shader {
+public:
+    UIShader();
+
+    static std::string vertexShaderSource();
+    static std::string fragmentShaderSource();
+};

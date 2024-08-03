@@ -13,6 +13,7 @@ Renderer::Renderer(int w, int h) {
     init_camera(w, h);
     init_buffer();
     init_texture();
+    oit = std::make_unique<OIT>(w, h);
 }
 
 void Renderer::init_shader() {
@@ -20,6 +21,7 @@ void Renderer::init_shader() {
     special = std::make_unique<SpecialShader>();
     cube = std::make_unique<CubeShader>();
     sky = std::make_unique<SkyShader>();
+    ui = std::make_unique<UIShader>();
 }
 
 void Renderer::init_camera(int w, int h) {
@@ -126,8 +128,8 @@ void Renderer::render(const DrawData& draw_data) {
     update_ubo(draw_data);
 //    uninstall_useless_chunks();
 
-    render_bcakground();
     render_pass_3D(draw_data);
+    render_pass_2D(draw_data);
 }
 
 void Renderer::render_bcakground() {
@@ -139,15 +141,17 @@ void Renderer::render_bcakground() {
     sky->use();
     cube_vao->bind();
     glDrawArrays(GL_TRIANGLES, 0, 36);
-
 }
 
 void Renderer::render_pass_3D(const DrawData& draw_data) {
+    oit->opaque_pass();
+
+    render_bcakground();
+
     // scene pass
     // normal face
     glEnable(GL_DEPTH_TEST);
     glCullFace(GL_BACK);
-    glDisable(GL_BLEND);
 
     simple->use();
     main_mesh->bind();
@@ -155,34 +159,40 @@ void Renderer::render_pass_3D(const DrawData& draw_data) {
     // I need this func to impl the further optimization: glDrawArraysInstancedBaseInstance
     // some platforms dont support it
 
-    // special face
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    oit->transparent_pass();
 
+    // special face
     special->use();
     special_mesh->bind();
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, special_faces);
 
-    glDepthMask(GL_TRUE);
-
 //    auto [mn, mx] = draw_data.camera_visible_range;
 //    std::printf("%d\n", (mx.x - mn.x + 16)*(mx.z - mn.z + 16)/256);
+}
+
+void Renderer::render_pass_2D(const DrawData& draw_data) {
+    // composite pass
+    oit->composite(main_mesh->vao); // so that oit dosent need to create a vao
+
+    // screen pass
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    ui->use();
+    oit->bind_final_tex(7);
+
+    main_mesh->bind();
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // target block pass
     if (draw_data.camera_target_block) {
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_CULL_FACE);
         mathpls::vec3 pos = *draw_data.camera_target_block;
         cube->use();
         glUniform3fv(glGetUniformLocation(cube->ID(), "position"), 1, pos.value_ptr());
         cube_vao->bind();
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
-}
-
-void Renderer::render_pass_2D() {
-
 }
 
 Camera* Renderer::getCamera() const{

@@ -9,6 +9,7 @@
 #include "camera.hpp"
 #include "texture.hpp"
 #include "render_type.hpp"
+#include "oit.hpp"
 
 #include "utils/event.h"
 #include "world/world.hpp"
@@ -27,7 +28,7 @@ public:
     void render(const DrawData& draw_data);
     void render_bcakground();
     void render_pass_3D(const DrawData& draw_data);
-    void render_pass_2D();
+    void render_pass_2D(const DrawData& draw_data);
 
     [[nodiscard]] Camera* getCamera() const;
 
@@ -36,6 +37,7 @@ private:
     std::unique_ptr<Shader> special;
     std::unique_ptr<Shader> cube;
     std::unique_ptr<Shader> sky;
+    std::unique_ptr<Shader> ui;
 
     std::unique_ptr<VAO> cube_vao;
     std::unique_ptr<CubeVBO> cube_vbo;
@@ -67,6 +69,8 @@ private:
     std::unique_ptr<Texture> block_tex;
     std::unique_ptr<Texture> sky_tex;
     std::unique_ptr<Texture> star_tex;
+
+    std::unique_ptr<OIT> oit;
 
 private:
     void update_chunk(ChunkData& chunk, const ChunkFace& new_face);
