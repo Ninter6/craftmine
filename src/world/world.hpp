@@ -56,7 +56,7 @@ public:
     void update();
 
     DrawData get_draw_data(); // this will reset chunks' dirty flag
-    std::unordered_map<ChunkPos, std::vector<Face>> get_dirty_chunk_data();
+    std::unordered_map<ChunkPos, ChunkFace> get_dirty_chunk_data();
 
     std::optional<Chunk*> is_chunk_initialized(ChunkPos p) const; // if uninitialized, return nullopt
 

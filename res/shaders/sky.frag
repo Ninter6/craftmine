@@ -1,3 +1,5 @@
+[{sky,1}]
+[{star,2}]
 #version 410 core
 
 in vec3 fragDir;

@@ -102,7 +102,7 @@ void World::gen_camera_sight() {
 
 ChunkPos World::calcu_camera_chunk() {
     last_camera_sight = camera_sight;
-    if (!cam->is_dirty) {
+    if (cam->is_dirty) {
         auto x = (int) cam->position.x;
         auto z = (int) cam->position.z;
         camera_chunk = {x & ~15, z & ~15};
@@ -151,8 +151,9 @@ std::pair<ChunkPos, ChunkPos> World::get_camera_sight() const {
 }
 
 void World::calcu_new_chunk_camera_sight() {
-    if (camera_sight.first == last_camera_sight.first &&
-        camera_sight.second == last_camera_sight.second) return;
+    if (!cam->is_dirty ||
+        (camera_sight.first == last_camera_sight.first &&
+         camera_sight.second == last_camera_sight.second)) return;
 
     auto xmn = std::max(camera_sight.first.x, last_camera_sight.first.x);
     auto zmn = std::max(camera_sight.first.z, last_camera_sight.first.z);
@@ -198,12 +199,12 @@ DrawData World::get_draw_data() {
     return data;
 }
 
-std::unordered_map<ChunkPos, std::vector<Face>> World::get_dirty_chunk_data() {
+std::unordered_map<ChunkPos, ChunkFace> World::get_dirty_chunk_data() {
     auto [min, max] = camera_sight;
     auto [xb, zb] = min;
     auto [xe, ze] = max;
 
-    std::unordered_map<ChunkPos, std::vector<Face>> dirty_chunks;
+    std::unordered_map<ChunkPos, ChunkFace> dirty_chunks;
     for (int x = xb; x <= xe; x += 16)
         for (int z = zb; z <= ze; z += 16) {
             ChunkPos p = {x, z};

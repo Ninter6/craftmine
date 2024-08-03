@@ -279,16 +279,16 @@ struct Shrub : Decoration<Shrub> {
     };
 };
 
-struct Water : Block<Water> {
+struct Water : SpecialBlock<Water> {
     [[nodiscard]] bool transparent() const override { return true; }
     [[nodiscard]] bool fluid() const override { return true; }
-    const Face faces[6] = {
-        {0, 0, 0, 120},
-        {0, 1, 0, 120},
-        {0, 2, 0, 120},
-        {0, 3, 0, 120},
-        {0, 4, 0, 120},
-        {0, 5, 0, 120}
+    const SpecialFace faces[6] = {
+        {.facing = 0, .firstTex = 120, .lastTex = 125, .remainTick = 100},
+        {.facing = 1, .firstTex = 120, .lastTex = 125, .remainTick = 100},
+        {.facing = 2, .firstTex = 120, .lastTex = 125, .remainTick = 100},
+        {.facing = 3, .firstTex = 120, .lastTex = 125, .remainTick = 100},
+        {.facing = 4, .firstTex = 120, .lastTex = 125, .remainTick = 100},
+        {.facing = 5, .firstTex = 120, .lastTex = 125, .remainTick = 100}
     };
 };
 

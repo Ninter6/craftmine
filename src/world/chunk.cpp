@@ -8,8 +8,8 @@
 
 Chunk::Chunk(ChunkPos pos) : position(pos), blocks(64, Plane::zero()) {}
 
-std::vector<Face> Chunk::get_render_faces() const {
-    std::vector<Face> rst;
+ChunkFace Chunk::get_render_faces() const {
+    ChunkFace rst;
 
     for (int y = 0; y < blocks.size(); y++)
         for (int z = 0; z < 16; z++)
@@ -181,12 +181,23 @@ float Chunk::calcu_sun_intensity(int facing, int y, int z, int x) const {
     return y < h ? .314f : 1.f;
 }
 
-void Chunk::get_block_face(int y, int z, int x, FaceMask mask, std::vector<Face>& faces) const {
-    auto bf = get_block(y, z, x)->get_faces(mask);
+void Chunk::get_block_face(int y, int z, int x, FaceMask mask, ChunkFace& cf) const {
+    auto&& b = get_block(y, z, x);
+    auto pos = mathpls::vec3(position) + mathpls::vec3(x, y, z);
     int i = 0;
-    while (bf[i]) {
-        bf[i]->pos = mathpls::vec3(position) + mathpls::vec3(x, y, z);
-        bf[i]->sunIntensity = calcu_sun_intensity(bf[i]->facing, y, z, x);
-        faces.push_back(*bf[i++]);
+    if (b->special()) {
+        auto bf = b->get_special_faces(mask);
+        while (bf[i]) {
+            bf[i]->pos = pos;
+            bf[i]->sunIntensity = calcu_sun_intensity(bf[i]->facing, y, z, x);
+            cf.special_faces.push_back(*bf[i++]);
+        }
+    } else {
+        auto bf = b->get_faces(mask);
+        while (bf[i]) {
+            bf[i]->pos = pos;
+            bf[i]->sunIntensity = calcu_sun_intensity(bf[i]->facing, y, z, x);
+            cf.normal_faces.push_back(*bf[i++]);
+        }
     }
 }

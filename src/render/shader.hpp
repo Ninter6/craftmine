@@ -9,10 +9,14 @@
 
 #include "glad.h"
 
+class Shader;
 struct ShaderProcessor {
     std::string process(const std::string& src);
 
-    std::unordered_map<std::string, int> bindings;
+    void bind(Shader* sh);
+
+    std::unordered_map<std::string, int> binding_ubo;
+    std::unordered_map<std::string, int> binding_tex;
 };
 
 class Shader {
@@ -30,8 +34,6 @@ public:
 
 private:
     GLuint handle;
-
-    void processBindings(const std::unordered_map<std::string, int>& bindings);
 
     static void compileShader(GLuint shader, std::string_view source);
 };
@@ -55,6 +57,14 @@ public:
 class SkyShader : public Shader {
 public:
     SkyShader();
+
+    static std::string vertexShaderSource();
+    static std::string fragmentShaderSource();
+};
+
+class SpecialShader : public Shader {
+public:
+    SpecialShader();
 
     static std::string vertexShaderSource();
     static std::string fragmentShaderSource();

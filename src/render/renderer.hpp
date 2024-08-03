@@ -33,6 +33,7 @@ public:
 
 private:
     std::unique_ptr<Shader> simple;
+    std::unique_ptr<Shader> special;
     std::unique_ptr<Shader> cube;
     std::unique_ptr<Shader> sky;
 
@@ -45,11 +46,15 @@ private:
     int main_faces = 0;
     std::unique_ptr<Mesh> main_mesh;
 
+    bool special_mesh_update = false;
+    int special_faces = 0;
+    std::unique_ptr<Mesh> special_mesh;
+
     struct ChunkData {
         ChunkPos pos;
-        std::vector<Face> faces;
-//        int count = 0; // of the faces render before its
-        int dirty = 0; // 0:clean, 1:modified, 2:buffer invalid
+        ChunkFace faces;
+        int main_dirty = 0; // 0:clean, 1:modified, 2:buffer invalid
+        int special_dirty = 0; // 0:clean, 1:modified, 2:buffer invalid
     };
     static constexpr int MAX_CHUNKS = (SIGHT_DISTANCE*2+1)*(SIGHT_DISTANCE*2+1);
     std::array<ChunkData, MAX_CHUNKS> chunks;
@@ -64,9 +69,11 @@ private:
     std::unique_ptr<Texture> star_tex;
 
 private:
-    void update_chunk(ChunkData& chunk, std::span<const Face> new_face);
+    void update_chunk(ChunkData& chunk, const ChunkFace& new_face);
     void update_chunks(const DrawData& data);
     void update_main_mesh(const std::pair<ChunkPos, ChunkPos>& visible_range);
+    void update_special_mesh(const std::pair<ChunkPos, ChunkPos>& visible_range);
+    void uninstall_useless_chunks();
     void update_ubo(const DrawData& data);
 
     void init_shader();
@@ -75,8 +82,9 @@ private:
     void init_chunk_buffers();
     void init_texture();
 
-    bool try_install_chunk(ChunkPos pos, std::span<const Face> face);
-    void process_new_chunks(std::span<std::pair<ChunkPos, std::span<const Face>>> new_chunks, const std::pair<ChunkPos, ChunkPos>& visible_range);
+    void uninstall_chunk(int index);
+    bool try_install_chunk(ChunkPos pos, const ChunkFace& face);
+    void process_new_chunks(std::span<std::pair<ChunkPos, const ChunkFace*>> new_chunks, const std::pair<ChunkPos, ChunkPos>& visible_range);
 
     static bool is_chunk_visible(ChunkPos pos, const std::pair<ChunkPos, ChunkPos>& visible_range);
 

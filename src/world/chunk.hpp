@@ -52,9 +52,9 @@ struct Chunk {
 
     float calcu_sun_intensity(int facing, int y, int z, int x) const;
 
-    void get_block_face(int y, int z, int x, FaceMask mask, std::vector<Face>& faces) const;
+    void get_block_face(int y, int z, int x, FaceMask mask, ChunkFace& cf) const;
 
-    std::vector<Face> get_render_faces() const;
+    ChunkFace get_render_faces() const;
 
 };
 

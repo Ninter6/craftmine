@@ -1,6 +1,4 @@
-[[UBO,0]]
-// [[name,binding]]
-#version 330 core
+#version 410
 
 layout (location = 0) in vec3 vert;
 layout (location = 1) in vec2 uv;
@@ -8,11 +6,15 @@ layout (location = 1) in vec2 uv;
 layout (location = 2) in vec3 pos;
 layout (location = 3) in int facing;
 layout (location = 4) in float posOffset;
-layout (location = 5) in float texIndex;
-layout (location = 6) in float lightIntensity;
-layout (location = 7) in vec4 color;
+layout (location = 5) in float lightIntensity;
+layout (location = 6) in vec4 color;
+layout (location = 7) in float firstTex;
+layout (location = 8) in float lastTex;
+layout (location = 9) in float remain;
 
-out vec2 fragUV;
+out vec2 fuv;
+out vec2 cuv;
+flat out float tex_t;
 flat out vec4 fragColor;
 
 layout(std140) uniform UBO {
@@ -23,6 +25,7 @@ layout(std140) uniform UBO {
 };
 
 const float map_size = 12;
+const float tick_per_half_day = 6000;
 
 const mat3 FM[6] = mat3[](
     mat3(
@@ -33,10 +36,10 @@ const mat3 FM[6] = mat3[](
     mat3(
         0, 0, 1,
         0, 1, 0,
-       -1, 0, 0
+        -1, 0, 0
     ), // left
     mat3(
-       -1, 0, 0,
+        -1, 0, 0,
         0, 1, 0,
         0, 0,-1
     ), // back
@@ -65,14 +68,24 @@ const vec3 N[6] = vec3[6](
     vec3( 0,-1, 0)
 );
 
+void calcu_uv() {
+    float t = fract(acos(normalize(sunDir.xy).x) / 3.141593f * tick_per_half_day / remain);
+    float g = mix(firstTex, lastTex, t);
+    float fg = floor(g);
+    float cg = ceil(g);
+    tex_t = g - fg;
+    vec2 uv1 = vec2(fract(fg / map_size)*map_size, floor(fg / map_size));
+    vec2 uv2 = vec2(fract(cg / map_size)*map_size, floor(cg / map_size));
+    fuv = (1.0 - uv + uv1) / map_size;
+    cuv = (1.0 - uv + uv2) / map_size;
+}
+
 void main() {
     vec3 p = vec3(vert.xy, vert.z + posOffset);
     vec3 world_pos = FM[facing] * (p-0.5) + 0.5 + pos;
     gl_Position = proj * view * vec4(world_pos, 1.0);
 
-    float g = texIndex / map_size;
-    vec2 uvOffset = vec2(fract(g)*map_size, floor(g));
-    fragUV = (1.0 - uv + uvOffset) / map_size;
+    calcu_uv();
 
     float S = (max(dot(N[facing], sunDir), 0) * 0.4 + 0.6) * sunI * pow(lightIntensity, sunI);
     fragColor = vec4(color.rgb * S, color.a);

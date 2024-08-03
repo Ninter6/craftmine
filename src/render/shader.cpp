@@ -4,14 +4,18 @@
 
 #include "shader.hpp"
 
+#include <cassert>
 #include <fstream>
 #include <sstream>
 
 #include "utils/check_gl.h"
 
 std::string ShaderProcessor::process(const std::string &src) {
-    auto last = src.rfind("]]");
-    if (last == std::string::npos) return src;
+    auto last = src.rfind("}]");
+    if (last == std::string::npos && (last = src.rfind("]]")) == std::string::npos)
+        return src;
+
+    assert(src.find("#version") > last);
 
     auto bind = src.substr(0, last + 2);
     auto rst = src.substr(last + 2);
@@ -21,14 +25,34 @@ std::string ShaderProcessor::process(const std::string &src) {
 
     std::string line;
     while (std::getline(ss, line)) {
+        if (line.compare(0, 2, "[{") == 0) break;
         if (line.compare(0, 2, "[[") != 0) continue;
         auto sp = line.find(',');
         auto name = line.substr(2, sp-2);
         auto num = line.substr(sp+1, line.find("]]"));
-        bindings.emplace(name, std::stoi(num));
+        binding_ubo.emplace(name, std::stoi(num));
     }
+    do {
+        if (line.compare(0, 2, "[{") != 0) continue;
+        auto sp = line.find(',');
+        auto name = line.substr(2, sp-2);
+        auto num = line.substr(sp+1, line.find("}]"));
+        binding_tex.emplace(name, std::stoi(num));
+    } while (std::getline(ss, line));
 
     return rst;
+}
+
+void ShaderProcessor::bind(Shader* sh) {
+    sh->use();
+    for (const auto& [name, index] : binding_ubo) {
+        auto ubo_id = glGetUniformBlockIndex(sh->ID(), name.c_str());
+        CHECK_GL(glUniformBlockBinding(sh->ID(), ubo_id, index));
+    }
+    for (const auto& [name, index] : binding_tex) {
+        auto tex_id = glGetUniformLocation(sh->ID(), name.c_str());
+        CHECK_GL(glUniform1i(tex_id, index));
+    }
 }
 
 Shader::Shader(const std::string& vs, const std::string& fs) {
@@ -58,14 +82,7 @@ Shader::Shader(const std::string& vs, const std::string& fs) {
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 
-    processBindings(pr.bindings);
-}
-
-void Shader::processBindings(const std::unordered_map<std::string, int>& bindings) {
-    for (const auto& [name, index] : bindings) {
-        unsigned int ubo_id = glGetUniformBlockIndex(handle, name.c_str());
-        glUniformBlockBinding(handle, ubo_id, index);
-    }
+    pr.bind(this);
 }
 
 void Shader::compileShader(GLuint shader, std::string_view source) {
@@ -73,6 +90,7 @@ void Shader::compileShader(GLuint shader, std::string_view source) {
     glShaderSource(shader, 1, &src, nullptr);
     glCompileShader(shader);
 
+#ifndef NDEBUG
     GLint status;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (status == GL_FALSE) {
@@ -82,6 +100,7 @@ void Shader::compileShader(GLuint shader, std::string_view source) {
         glGetShaderInfoLog(shader, length, nullptr, errorLog.data());
         throw std::runtime_error("Failed to compile shader:\n" + errorLog);
     }
+#endif
 }
 
 void Shader::use() const {
@@ -148,6 +167,25 @@ std::string SkyShader::vertexShaderSource() {
 
 std::string SkyShader::fragmentShaderSource() {
     std::ifstream frag{"/Users/mac/Desktop/temp/craftmine/res/shaders/sky.frag"};
+    return {
+        std::istreambuf_iterator<char>{frag},
+        std::istreambuf_iterator<char>{}
+    };
+}
+
+SpecialShader::SpecialShader()
+: Shader(vertexShaderSource(), fragmentShaderSource()) {}
+
+std::string SpecialShader::vertexShaderSource() {
+    std::ifstream vert{"/Users/mac/Desktop/temp/craftmine/res/shaders/special.vsh"};
+    return {
+        std::istreambuf_iterator<char>{vert},
+        std::istreambuf_iterator<char>{}
+    };
+}
+
+std::string SpecialShader::fragmentShaderSource() {
+    std::ifstream frag{"/Users/mac/Desktop/temp/craftmine/res/shaders/special.fsh"};
     return {
         std::istreambuf_iterator<char>{frag},
         std::istreambuf_iterator<char>{}

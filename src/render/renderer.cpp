@@ -17,6 +17,7 @@ Renderer::Renderer(int w, int h) {
 
 void Renderer::init_shader() {
     simple = std::make_unique<SimpleShader>();
+    special = std::make_unique<SpecialShader>();
     cube = std::make_unique<CubeShader>();
     sky = std::make_unique<SkyShader>();
 }
@@ -47,8 +48,7 @@ void Renderer::init_chunk_buffers() {
     main_mesh = std::make_unique<Mesh>(true);
     main_mesh->bind();
     quad_vbo->bind_attrib();
-    constexpr auto size = 16 * 16 * 128 * 3 * sizeof(Face) * MAX_CHUNKS;
-    main_mesh->vbo.buffer(nullptr, 0, size);
+    main_mesh->vbo.buffer(nullptr, 0, 16 * 16 * 128 * 3 * sizeof(Face) * MAX_CHUNKS);
     main_mesh->vbo.map();
     glEnableVertexAttribArray(2); // pos
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Face), nullptr);
@@ -68,6 +68,36 @@ void Renderer::init_chunk_buffers() {
     glEnableVertexAttribArray(7); // color
     glVertexAttribPointer(7, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Face), (void*)offsetof(Face, color));
     glVertexAttribDivisor(7, 1);
+
+    special_mesh = std::make_unique<Mesh>(true);
+    special_mesh->bind();
+    quad_vbo->bind_attrib();
+    special_mesh->vbo.buffer(nullptr, 0, 16 * 16 * 32 * 3 * sizeof(SpecialFace) * MAX_CHUNKS);
+    special_mesh->vbo.map();
+    glEnableVertexAttribArray(2); // pos
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(SpecialFace), nullptr);
+    glVertexAttribDivisor(2, 1);
+    glEnableVertexAttribArray(3); // facing
+    glVertexAttribIPointer(3, 1, GL_INT, sizeof(SpecialFace), (void*)offsetof(SpecialFace, facing));
+    glVertexAttribDivisor(3, 1);
+    glEnableVertexAttribArray(4); // posOffset
+    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, posOffset));
+    glVertexAttribDivisor(4, 1);
+    glEnableVertexAttribArray(5); // sunIntensity
+    glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, sunIntensity));
+    glVertexAttribDivisor(5, 1);
+    glEnableVertexAttribArray(6); // color
+    glVertexAttribPointer(6, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, color));
+    glVertexAttribDivisor(6, 1);
+    glEnableVertexAttribArray(7); // firstTex
+    glVertexAttribPointer(7, 1, GL_FLOAT, GL_FALSE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, firstTex));
+    glVertexAttribDivisor(7, 1);
+    glEnableVertexAttribArray(8); // lastTex
+    glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, lastTex));
+    glVertexAttribDivisor(8, 1);
+    glEnableVertexAttribArray(9); // remainTick
+    glVertexAttribPointer(9, 1, GL_FLOAT, GL_FALSE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, remainTick));
+    glVertexAttribDivisor(9, 1);
 }
 
 void Renderer::init_texture() {
@@ -78,8 +108,6 @@ void Renderer::init_texture() {
     sky_tex->bind(1);
     star_tex = Texture::LoadFromFile("/Users/mac/Desktop/temp/craftmine/res/images/star.png", true);
     star_tex->bind(2);
-    CHECK_GL(sky->set_texture("sky", 1));
-    CHECK_GL(sky->set_texture("star", 2));
 }
 
 void Renderer::init_event(Window& window, Eventor& eventor) {
@@ -94,7 +122,9 @@ void Renderer::init_event(Window& window, Eventor& eventor) {
 void Renderer::render(const DrawData& draw_data) {
     update_chunks(draw_data);
     update_main_mesh(draw_data.camera_visible_range);
+    update_special_mesh(draw_data.camera_visible_range);
     update_ubo(draw_data);
+//    uninstall_useless_chunks();
 
     render_bcakground();
     render_pass_3D(draw_data);
@@ -110,21 +140,31 @@ void Renderer::render_bcakground() {
     cube_vao->bind();
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
-//    glEnable(GL_BLEND);
-//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 }
 
 void Renderer::render_pass_3D(const DrawData& draw_data) {
     // scene pass
+    // normal face
     glEnable(GL_DEPTH_TEST);
     glCullFace(GL_BACK);
+    glDisable(GL_BLEND);
 
     simple->use();
     main_mesh->bind();
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, main_faces);
     // I need this func to impl the further optimization: glDrawArraysInstancedBaseInstance
     // some platforms dont support it
+
+    // special face
+    glDepthMask(GL_FALSE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    special->use();
+    special_mesh->bind();
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, special_faces);
+
+    glDepthMask(GL_TRUE);
 
 //    auto [mn, mx] = draw_data.camera_visible_range;
 //    std::printf("%d\n", (mx.x - mn.x + 16)*(mx.z - mn.z + 16)/256);
@@ -133,7 +173,6 @@ void Renderer::render_pass_3D(const DrawData& draw_data) {
     if (draw_data.camera_target_block) {
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
-        glLineWidth(5.0f);
         mathpls::vec3 pos = *draw_data.camera_target_block;
         cube->use();
         glUniform3fv(glGetUniformLocation(cube->ID(), "position"), 1, pos.value_ptr());
@@ -150,14 +189,21 @@ Camera* Renderer::getCamera() const{
     return camera.get();
 }
 
-void Renderer::update_chunk(Renderer::ChunkData& chunk, std::span<const Face> new_face) {
-    if (chunk.faces.size() == new_face.size() && chunk.dirty < 2)
-        chunk.dirty = 1;
-    else
-        chunk.dirty = 2;
-    chunk.faces.clear();
-    std::copy(new_face.begin(), new_face.end(), std::back_inserter(chunk.faces));
-    main_mesh_update = true;
+void Renderer::update_chunk(Renderer::ChunkData& chunk, const ChunkFace& new_face) {
+    if (!new_face.normal_faces.empty() || !chunk.faces.normal_faces.empty()) {
+        chunk.main_dirty = std::max(chunk.main_dirty,
+                                    1 + (int) (chunk.faces.normal_faces.size() != new_face.normal_faces.size()));
+        chunk.faces.normal_faces.clear();
+        std::copy(new_face.normal_faces.begin(), new_face.normal_faces.end(), std::back_inserter(chunk.faces.normal_faces));
+        main_mesh_update = true;
+    }
+    if (!new_face.special_faces.empty() || !chunk.faces.special_faces.empty()) {
+        chunk.special_dirty = std::max(chunk.special_dirty,
+                                       1 + (int) (chunk.faces.special_faces.size() != new_face.special_faces.size()));
+        chunk.faces.special_faces.clear();
+        std::copy(new_face.special_faces.begin(), new_face.special_faces.end(), std::back_inserter(chunk.faces.special_faces));
+        special_mesh_update = true;
+    }
 }
 
 void Renderer::update_ubo(const DrawData& data) {
@@ -172,16 +218,16 @@ void Renderer::update_ubo(const DrawData& data) {
 }
 
 void Renderer::update_chunks(const DrawData& data) {
-    std::vector<std::pair<ChunkPos, std::span<const Face>>> new_chunks;
+    std::vector<std::pair<ChunkPos, const ChunkFace*>> new_chunks;
     new_chunks.reserve(data.dirty_chunk.size() / 2);
     for (auto&& [pos, face] : data.dirty_chunk)
         if (!try_install_chunk(pos, face))
-            new_chunks.emplace_back(pos, face);
+            new_chunks.emplace_back(pos, &face);
     if (!new_chunks.empty())
         process_new_chunks(new_chunks, data.camera_visible_range);
 }
 
-bool Renderer::try_install_chunk(ChunkPos pos, std::span<const Face> face) {
+bool Renderer::try_install_chunk(ChunkPos pos, const ChunkFace& face) {
     auto it = chunk_map.find(pos);
     if (it != chunk_map.end()) {
         update_chunk(chunks[it->second], face);
@@ -195,7 +241,7 @@ bool Renderer::try_install_chunk(ChunkPos pos, std::span<const Face> face) {
     return false;
 }
 
-void Renderer::process_new_chunks(std::span<std::pair<ChunkPos, std::span<const Face>>> new_chunks, const std::pair<ChunkPos, ChunkPos>& visible_range) {
+void Renderer::process_new_chunks(std::span<std::pair<ChunkPos, const ChunkFace*>> new_chunks, const std::pair<ChunkPos, ChunkPos>& visible_range) {
     std::vector<size_t> uninstall_chunks;
     uninstall_chunks.reserve(new_chunks.size());
     for (int i = MAX_CHUNKS - 1; uninstall_chunks.size() < new_chunks.size() && i >= 0; --i) {
@@ -207,7 +253,7 @@ void Renderer::process_new_chunks(std::span<std::pair<ChunkPos, std::span<const 
         chunk_map.erase(chunks[index].pos);
         chunk_map.emplace(pos, index);
         chunks[index].pos = pos;
-        update_chunk(chunks[index], new_chunks[i++].second);
+        update_chunk(chunks[index], *new_chunks[i++].second);
     }
 }
 
@@ -216,25 +262,71 @@ bool Renderer::is_chunk_visible(ChunkPos pos, const std::pair<ChunkPos, ChunkPos
     return min.x <= pos.x && min.z <= pos.z && pos.x <= max.x && pos.z <= max.z;
 }
 
+void Renderer::uninstall_chunk(int index) {
+    installed_chunks--;
+    if(index == installed_chunks) {
+        chunk_map.erase(chunks[index].pos);
+        return;
+    }
+    chunk_map.erase(chunks[index].pos);
+    chunk_map[chunks[installed_chunks].pos] = index;
+    std::swap(chunks[index], chunks[installed_chunks]);
+}
+
+void Renderer::uninstall_useless_chunks() {
+    for (int i = installed_chunks - 1; i >= 0; --i)
+        if ((chunks[i].main_dirty == 2 || chunks[i].faces.normal_faces.empty()) &&
+            (chunks[i].special_dirty == 2 || chunks[i].faces.special_faces.empty()))
+            uninstall_chunk(i);
+}
+
 void Renderer::update_main_mesh(const std::pair<ChunkPos, ChunkPos>& visible_range) {
     if (!main_mesh_update) return;
     main_mesh_update = false;
     main_mesh->bind();
     main_faces = 0;
 
+    int i = 0;
     bool has_dirty = false;
     for (auto& c : chunks) {
+        if (i++ >= installed_chunks) break;
         if (has_dirty && !is_chunk_visible(c.pos, visible_range)) {
-            c.dirty = 2;
+            c.main_dirty = 2;
             continue;
         }
-        if (has_dirty || c.dirty) {
+        if (has_dirty || c.main_dirty) {
             std::memcpy((Face*) main_mesh->vbo.mem_map + main_faces,
-                        c.faces.data(),
-                        c.faces.size() * sizeof(Face));
-            if (c.dirty > 1) has_dirty = true;
-            c.dirty = 0;
+                        c.faces.normal_faces.data(),
+                        c.faces.normal_faces.size() * sizeof(Face));
+            if (c.main_dirty > 1) has_dirty = true;
+            c.main_dirty = 0;
         }
-        main_faces += (int)c.faces.size();
+        main_faces += (int)c.faces.normal_faces.size();
+    }
+}
+
+void Renderer::update_special_mesh(const std::pair<ChunkPos, ChunkPos>& visible_range) {
+    if (!special_mesh_update) return;
+
+    special_mesh_update = false;
+    special_mesh->bind();
+    special_faces = 0;
+
+    int i = 0;
+    bool has_dirty = false;
+    for (auto& c : chunks) {
+        if (i++ >= installed_chunks) break;
+        if (has_dirty && !is_chunk_visible(c.pos, visible_range)) {
+            c.special_dirty = 2;
+            continue;
+        }
+        if (has_dirty || c.special_dirty) {
+            std::memcpy((SpecialFace*) special_mesh->vbo.mem_map + special_faces,
+                        c.faces.special_faces.data(),
+                        c.faces.special_faces.size() * sizeof(SpecialFace));
+            if (c.special_dirty > 1) has_dirty = true;
+            c.special_dirty = 0;
+        }
+        special_faces += (int)c.faces.special_faces.size();
     }
 }
