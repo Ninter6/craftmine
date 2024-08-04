@@ -13,12 +13,12 @@ auto GLFW = glfw::init();
 Window::Window(const WindowInfo& info) : size(info.extent) {
     init_window(info);
     init_render(info.extent.x, info.extent.y);
+    init_world();
     init_event();
 }
 
 void Window::init_window(const WindowInfo& info) {
     glfw::WindowHints{
-        .samples = 4,
         .contextVersionMajor = 4,
         .contextVersionMinor = 1,
 #ifdef __APPLE__
@@ -49,6 +49,13 @@ void Window::init_render(int w, int h) {
     renderer = std::make_unique<Renderer>(w, h);
 }
 
+void Window::init_world() {
+    world = std::make_unique<World>(WorldInitInfo{
+        .seed = 114514,
+        .camera = renderer->getCamera()
+    });
+}
+
 void Window::init_event() {
     eventor = std::make_unique<Eventor>(
         std::make_shared<Listener>(
@@ -65,6 +72,13 @@ void Window::init_event() {
     });
 
     renderer->init_event(*this, *eventor);
+
+    eventor->add_event({{}, {}, {}, 0, {}}, [&](auto&& lsn) {
+        if (lsn.IsMouseButtonReleased(1))
+            world->set_camera_target_block(BlockType::air, false);
+        else if (lsn.IsMouseButtonReleased(2))
+            world->set_camera_target_block(BlockType::stone, true);
+    });
 }
 
 void Window::loop() {
@@ -74,13 +88,15 @@ void Window::loop() {
     while (!window.shouldClose()) {
         eventor->Update();
 
+        world->update();
+
         render();
 
         window.swapBuffers();
         glfw::pollEvents();
 
         count++;
-        if ((cl::now() - t).count() > 1e9) {
+        if (cl::now() - t > std::chrono::seconds{1}) {
             std::printf("\rFPS: %d", count);
             t = cl::now();
             count = 0;
@@ -89,20 +105,5 @@ void Window::loop() {
 }
 
 void Window::render() {
-    static World world{{
-        .seed = 114514,
-        .camera = renderer->getCamera()
-    }};
-    static auto _ = ([&]{
-        eventor->add_event({{}, {}, {}, 0, {}}, [&](auto&& lsn) {
-            if (lsn.IsMouseButtonReleased(1))
-                world.set_camera_target_block(BlockType::air, false);
-            else if (lsn.IsMouseButtonReleased(2))
-                world.set_camera_target_block(BlockType::stone, true);
-        });
-    }(), 0);
-
-    world.update();
-
-    renderer->render(world.get_draw_data());
+    renderer->render(world->get_draw_data());
 }

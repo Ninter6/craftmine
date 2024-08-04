@@ -120,7 +120,7 @@ SimpleShader::SimpleShader()
 : Shader(vertexShaderSource(), fragmentShaderSource()) {}
 
 std::string SimpleShader::vertexShaderSource() {
-    std::ifstream fquadv{"/Users/mac/Desktop/temp/craftmine/res/shaders/simple.vsh"};
+    std::ifstream fquadv{FILE_ROOT"shaders/simple.vsh"};
     return {
         std::istreambuf_iterator<char>{fquadv},
         std::istreambuf_iterator<char>{}
@@ -128,7 +128,7 @@ std::string SimpleShader::vertexShaderSource() {
 }
 
 std::string SimpleShader::fragmentShaderSource() {
-    std::ifstream fquadf{"/Users/mac/Desktop/temp/craftmine/res/shaders/simple.fsh"};
+    std::ifstream fquadf{FILE_ROOT"shaders/simple.fsh"};
     return {
         std::istreambuf_iterator<char>{fquadf},
         std::istreambuf_iterator<char>{}
@@ -139,7 +139,7 @@ CubeShader::CubeShader()
 : Shader(vertexShaderSource(), fragmentShaderSource()) {}
 
 std::string CubeShader::vertexShaderSource() {
-    std::ifstream vert{"/Users/mac/Desktop/temp/craftmine/res/shaders/cube_line.vert"};
+    std::ifstream vert{FILE_ROOT"shaders/cube_line.vert"};
     return {
         std::istreambuf_iterator<char>{vert},
         std::istreambuf_iterator<char>{}
@@ -147,7 +147,7 @@ std::string CubeShader::vertexShaderSource() {
 }
 
 std::string CubeShader::fragmentShaderSource() {
-    std::ifstream frag{"/Users/mac/Desktop/temp/craftmine/res/shaders/cube_line.frag"};
+    std::ifstream frag{FILE_ROOT"shaders/cube_line.frag"};
     return {
         std::istreambuf_iterator<char>{frag},
         std::istreambuf_iterator<char>{}
@@ -158,7 +158,7 @@ SkyShader::SkyShader()
 : Shader(vertexShaderSource(), fragmentShaderSource()) {}
 
 std::string SkyShader::vertexShaderSource() {
-    std::ifstream vert{"/Users/mac/Desktop/temp/craftmine/res/shaders/sky.vert"};
+    std::ifstream vert{FILE_ROOT"shaders/sky.vert"};
     return {
         std::istreambuf_iterator<char>{vert},
         std::istreambuf_iterator<char>{}
@@ -166,7 +166,26 @@ std::string SkyShader::vertexShaderSource() {
 }
 
 std::string SkyShader::fragmentShaderSource() {
-    std::ifstream frag{"/Users/mac/Desktop/temp/craftmine/res/shaders/sky.frag"};
+    std::ifstream frag{FILE_ROOT"shaders/sky.frag"};
+    return {
+        std::istreambuf_iterator<char>{frag},
+        std::istreambuf_iterator<char>{}
+    };
+}
+
+SunShader::SunShader()
+: Shader(vertexShaderSource(), fragmentShaderSource()) {}
+
+std::string SunShader::vertexShaderSource() {
+    std::ifstream vert{FILE_ROOT"shaders/sun.vert"};
+    return {
+        std::istreambuf_iterator<char>{vert},
+        std::istreambuf_iterator<char>{}
+    };
+}
+
+std::string SunShader::fragmentShaderSource() {
+    std::ifstream frag{FILE_ROOT"shaders/sun.frag"};
     return {
         std::istreambuf_iterator<char>{frag},
         std::istreambuf_iterator<char>{}
@@ -177,7 +196,7 @@ SpecialShader::SpecialShader()
 : Shader(vertexShaderSource(), fragmentShaderSource()) {}
 
 std::string SpecialShader::vertexShaderSource() {
-    std::ifstream vert{"/Users/mac/Desktop/temp/craftmine/res/shaders/special.vsh"};
+    std::ifstream vert{FILE_ROOT"shaders/special.vsh"};
     return {
         std::istreambuf_iterator<char>{vert},
         std::istreambuf_iterator<char>{}
@@ -185,7 +204,7 @@ std::string SpecialShader::vertexShaderSource() {
 }
 
 std::string SpecialShader::fragmentShaderSource() {
-    std::ifstream frag{"/Users/mac/Desktop/temp/craftmine/res/shaders/special.fsh"};
+    std::ifstream frag{FILE_ROOT"shaders/special.fsh"};
     return {
         std::istreambuf_iterator<char>{frag},
         std::istreambuf_iterator<char>{}
@@ -196,7 +215,7 @@ CompositeShader::CompositeShader()
 : Shader(vertexShaderSource(), fragmentShaderSource()) {}
 
 std::string CompositeShader::vertexShaderSource() {
-    std::ifstream vert{"/Users/mac/Desktop/temp/craftmine/res/shaders/composite.vert"};
+    std::ifstream vert{FILE_ROOT"shaders/composite.vert"};
     return {
         std::istreambuf_iterator<char>{vert},
         std::istreambuf_iterator<char>{}
@@ -204,7 +223,7 @@ std::string CompositeShader::vertexShaderSource() {
 }
 
 std::string CompositeShader::fragmentShaderSource() {
-    std::ifstream frag{"/Users/mac/Desktop/temp/craftmine/res/shaders/composite.frag"};
+    std::ifstream frag{FILE_ROOT"shaders/composite.frag"};
     return {
         std::istreambuf_iterator<char>{frag},
         std::istreambuf_iterator<char>{}
@@ -215,7 +234,7 @@ UIShader::UIShader()
 : Shader(vertexShaderSource(), fragmentShaderSource()) {}
 
 std::string UIShader::vertexShaderSource() {
-    std::ifstream vert{"/Users/mac/Desktop/temp/craftmine/res/shaders/ui.vsh"};
+    std::ifstream vert{FILE_ROOT"shaders/ui.vsh"};
     return {
         std::istreambuf_iterator<char>{vert},
         std::istreambuf_iterator<char>{}
@@ -223,7 +242,7 @@ std::string UIShader::vertexShaderSource() {
 }
 
 std::string UIShader::fragmentShaderSource() {
-    std::ifstream frag{"/Users/mac/Desktop/temp/craftmine/res/shaders/ui.fsh"};
+    std::ifstream frag{FILE_ROOT"shaders/ui.fsh"};
     return {
         std::istreambuf_iterator<char>{frag},
         std::istreambuf_iterator<char>{}

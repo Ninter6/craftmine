@@ -31,11 +31,14 @@ private:
 
     std::unique_ptr<Eventor> eventor{};
 
+    std::unique_ptr<World> world{};
+
     friend Renderer;
 
 private:
     void init_window(const WindowInfo& info);
     void init_render(int w, int h);
+    void init_world();
     void init_event();
 
     void update();

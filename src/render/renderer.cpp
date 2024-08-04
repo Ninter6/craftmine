@@ -21,6 +21,7 @@ void Renderer::init_shader() {
     special = std::make_unique<SpecialShader>();
     cube = std::make_unique<CubeShader>();
     sky = std::make_unique<SkyShader>();
+    sun = std::make_unique<SunShader>();
     ui = std::make_unique<UIShader>();
 }
 
@@ -103,13 +104,16 @@ void Renderer::init_chunk_buffers() {
 }
 
 void Renderer::init_texture() {
-    block_tex = Texture::LoadFromFile("/Users/mac/Desktop/temp/craftmine/res/images/blocks.png");
+    block_tex = Texture::LoadFromFile(FILE_ROOT"images/blocks.png");
     block_tex->bind(0);
 
-    sky_tex = Texture::LoadFromFile("/Users/mac/Desktop/temp/craftmine/res/images/sky.png", true);
+    sky_tex = Texture::LoadFromFile(FILE_ROOT"images/sky.png", true);
     sky_tex->bind(1);
-    star_tex = Texture::LoadFromFile("/Users/mac/Desktop/temp/craftmine/res/images/star.png", true);
+    star_tex = Texture::LoadFromFile(FILE_ROOT"images/star.png", true);
     star_tex->bind(2);
+
+    sun_tex = Texture::LoadFromFile(FILE_ROOT"images/sun_moon.png");
+    sun_tex->bind(3);
 }
 
 void Renderer::init_event(Window& window, Eventor& eventor) {
@@ -126,7 +130,7 @@ void Renderer::render(const DrawData& draw_data) {
     update_main_mesh(draw_data.camera_visible_range);
     update_special_mesh(draw_data.camera_visible_range);
     update_ubo(draw_data);
-//    uninstall_useless_chunks();
+    uninstall_useless_chunks();
 
     render_pass_3D(draw_data);
     render_pass_2D(draw_data);
@@ -141,6 +145,11 @@ void Renderer::render_bcakground() {
     sky->use();
     cube_vao->bind();
     glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    // sun moon pass
+    sun->use();
+    main_mesh->bind();
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 void Renderer::render_pass_3D(const DrawData& draw_data) {
@@ -281,18 +290,29 @@ void Renderer::uninstall_chunk(int index) {
     chunk_map.erase(chunks[index].pos);
     chunk_map[chunks[installed_chunks].pos] = index;
     std::swap(chunks[index], chunks[installed_chunks]);
+    if (!chunks[index].faces.normal_faces.empty())
+        chunks[index].main_dirty = 2;
+    if (!chunks[index].faces.special_faces.empty())
+        chunks[index].special_dirty = 2;
 }
 
 void Renderer::uninstall_useless_chunks() {
+    // if this frame hasnt updated bufeers, no need to uninstall chunks
+    if (!main_mesh_update && !special_mesh_update)
+        return;
+
     for (int i = installed_chunks - 1; i >= 0; --i)
         if ((chunks[i].main_dirty == 2 || chunks[i].faces.normal_faces.empty()) &&
             (chunks[i].special_dirty == 2 || chunks[i].faces.special_faces.empty()))
             uninstall_chunk(i);
+
+    main_mesh_update = false;
+    special_mesh_update = false;
 }
 
 void Renderer::update_main_mesh(const std::pair<ChunkPos, ChunkPos>& visible_range) {
     if (!main_mesh_update) return;
-    main_mesh_update = false;
+
     main_mesh->bind();
     main_faces = 0;
 
@@ -318,7 +338,6 @@ void Renderer::update_main_mesh(const std::pair<ChunkPos, ChunkPos>& visible_ran
 void Renderer::update_special_mesh(const std::pair<ChunkPos, ChunkPos>& visible_range) {
     if (!special_mesh_update) return;
 
-    special_mesh_update = false;
     special_mesh->bind();
     special_faces = 0;
 

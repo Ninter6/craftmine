@@ -10,5 +10,5 @@ out vec2 fragUV;
 
 void main() {
     fragUV = uv;
-    gl_Position = vec4(pos * 2 -1, 0.0, 1.0);
+    gl_Position = vec4(pos * 2 - 1, 0.0, 1.0);
 }

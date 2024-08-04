@@ -86,7 +86,7 @@ void World::gen_world(ChunkPos min, ChunkPos max) {
         }
 }
 
-void World::neighbor_chunk(Chunk& c, ChunkPos npos, int n) {
+void World::neighbor_chunk(Chunk& c, ChunkPos npos, int n) { // NOLINT(*-make-member-function-const)
     if (auto p = is_chunk_initialized(npos)) {
         c.neighbor[n] = *p;
         (*p)->neighbor[3-n] = &c;

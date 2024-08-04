@@ -37,6 +37,7 @@ private:
     std::unique_ptr<Shader> special;
     std::unique_ptr<Shader> cube;
     std::unique_ptr<Shader> sky;
+    std::unique_ptr<Shader> sun;
     std::unique_ptr<Shader> ui;
 
     std::unique_ptr<VAO> cube_vao;
@@ -69,6 +70,7 @@ private:
     std::unique_ptr<Texture> block_tex;
     std::unique_ptr<Texture> sky_tex;
     std::unique_ptr<Texture> star_tex;
+    std::unique_ptr<Texture> sun_tex;
 
     std::unique_ptr<OIT> oit;
 

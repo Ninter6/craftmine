@@ -62,6 +62,14 @@ public:
     static std::string fragmentShaderSource();
 };
 
+class SunShader : public Shader {
+public:
+    SunShader();
+
+    static std::string vertexShaderSource();
+    static std::string fragmentShaderSource();
+};
+
 class SpecialShader : public Shader {
 public:
     SpecialShader();
