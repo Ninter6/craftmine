@@ -47,6 +47,10 @@ void Window::init_window(const WindowInfo& info) {
 
 void Window::init_render(int w, int h) {
     renderer = std::make_unique<Renderer>(w, h);
+
+    hotbar = std::make_unique<HotBar>(9);
+    ui = std::make_unique<UIManager>(*renderer->quad_vbo);
+    ui->add_widget(hotbar);
 }
 
 void Window::init_world() {
@@ -55,19 +59,6 @@ void Window::init_world() {
         .camera = renderer->getCamera()
     });
 }
-
-BlockType B[] {
-    BlockType::stone,
-    BlockType::wooden_plank,
-    BlockType::log,
-    BlockType::glass_nt,
-    BlockType::glass_red,
-    BlockType::glass_green,
-    BlockType::glass_blue,
-    BlockType::water,
-    BlockType::sand,
-};
-int b = 0;
 
 void Window::init_event() {
     eventor = std::make_unique<Eventor>(
@@ -86,11 +77,13 @@ void Window::init_event() {
 
     renderer->init_event(*this, *eventor);
 
+    hotbar->init_event(*eventor);
+
     eventor->add_event({{}, {}, {}, 0, {}}, [&](auto&& lsn) {
         if (lsn.IsMouseButtonReleased(1))
             world->set_camera_target_block(BlockType::air, false);
         else if (lsn.IsMouseButtonReleased(2))
-            world->set_camera_target_block(B[b], true);
+            world->set_camera_target_block(hotbar->get_selected_block(), true);
     });
 }
 
@@ -111,24 +104,6 @@ void Window::loop() {
             t = cl::now();
             count = 0;
         }
-        if (window.getKey(glfw::KeyCode::One))
-            b = 0;
-        else if (window.getKey(glfw::KeyCode::Two))
-            b = 1;
-        else if (window.getKey(glfw::KeyCode::Three))
-            b = 2;
-        else if (window.getKey(glfw::KeyCode::Four))
-            b = 3;
-        else if (window.getKey(glfw::KeyCode::Five))
-            b = 4;
-        else if (window.getKey(glfw::KeyCode::Six))
-            b = 5;
-        else if (window.getKey(glfw::KeyCode::Seven))
-            b = 6;
-        else if (window.getKey(glfw::KeyCode::Eight))
-            b = 7;
-        else if (window.getKey(glfw::KeyCode::Nine))
-            b = 8;
     }
 }
 
@@ -139,4 +114,5 @@ void Window::update() {
 
 void Window::render() {
     renderer->render(world->get_draw_data());
+    ui->render_ui(renderer->ui.get());
 }

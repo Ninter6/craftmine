@@ -53,7 +53,7 @@ void Chunk::set_block(mathpls::ivec3 pos, BlockType type) {
     } else {
         if ((o->fragmentary() || o->transparent()) != (n->fragmentary() || n->transparent()))
             new_neighbor(pos.y, pos.z, pos.x);
-        if (::get_block(type)->renderable() && !::get_block(block.type)->renderable())
+        if (n->renderable() && !o->renderable())
             block.neighbors = search_neighbors(pos.y, pos.z, pos.x);
     }
 

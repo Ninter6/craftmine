@@ -1,7 +1,5 @@
 #include "render/window.hpp"
 
-#include "math/ray.hpp"
-
 #include <iostream>
 
 int main() {

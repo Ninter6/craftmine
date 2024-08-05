@@ -11,6 +11,7 @@
 #include "utils/event.h"
 
 #include "renderer.hpp"
+#include "ui.hpp"
 
 struct WindowInfo {
     mathpls::ivec2 extent{};
@@ -28,6 +29,9 @@ private:
     mathpls::ivec2 size{};
 
     std::unique_ptr<Renderer> renderer{};
+    std::unique_ptr<UIManager> ui{};
+
+    std::shared_ptr<HotBar> hotbar{};
 
     std::unique_ptr<Eventor> eventor{};
 

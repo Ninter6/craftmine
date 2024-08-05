@@ -14,6 +14,9 @@ Renderer::Renderer(int w, int h) {
     init_buffer();
     init_texture();
     init_oit(w, h);
+
+    ui->use();
+    glUniform1f(glGetUniformLocation(ui->ID(), "aspect"), (float)w / (float)h);
 }
 
 void Renderer::init_shader() {
@@ -116,6 +119,9 @@ void Renderer::init_texture() {
 
     sun_tex = Texture::LoadFromFile(FILE_ROOT"images/sun_moon.png");
     sun_tex->bind(3);
+
+    ui_tex = Texture::LoadFromFile(FILE_ROOT"images/ui.png");
+    ui_tex->bind(7);
 }
 
 void Renderer::init_event(Window& window, Eventor& eventor) {
@@ -123,7 +129,10 @@ void Renderer::init_event(Window& window, Eventor& eventor) {
         window.size = {w, h};
         glViewport(0, 0, w, h);
         init_oit(w, h);
-        camera->resetAspect((float)w / (float)h);
+        auto asp = (float)w / (float)h;
+        ui->use();
+        glUniform1f(glGetUniformLocation(ui->ID(), "aspect"), asp);
+        camera->resetAspect(asp);
     });
 
     camera->init_event(eventor);

@@ -73,8 +73,11 @@ private:
     std::unique_ptr<Texture> sky_tex;
     std::unique_ptr<Texture> star_tex;
     std::unique_ptr<Texture> sun_tex;
+    std::unique_ptr<Texture> ui_tex;
 
     std::unique_ptr<OIT> oit;
+
+    friend Window;
 
 private:
     void update_chunk(ChunkData& chunk, const ChunkFace& new_face);
