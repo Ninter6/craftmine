@@ -6,7 +6,7 @@
 
 #include "oit.hpp"
 
-OIT::OIT(int w, int h) {
+OIT::OIT(int w, int h, Shader* comp) : comp(comp) {
     glGenFramebuffers(1, &fbo);
 
     glGenTextures(1, &opaque);
@@ -50,9 +50,7 @@ OIT::OIT(int w, int h) {
     glBindTexture(GL_TEXTURE_2D, accumulation);
     glActiveTexture(GL_TEXTURE6);
     glBindTexture(GL_TEXTURE_2D, revealage);
-    glActiveTexture(GL_TEXTURE0);
-
-    comp = std::make_unique<CompositeShader>();
+    glActiveTexture(GL_TEXTURE7);
 }
 
 OIT::~OIT() {

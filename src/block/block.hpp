@@ -29,6 +29,11 @@ enum class BlockType : uint8_t {
     shrub,
     water,
     wooden_plank,
+    glass,
+    glass_red,
+    glass_green,
+    glass_blue,
+    glass_nt,
 
     MAX_BLOCKS
 };
@@ -283,12 +288,62 @@ struct Water : SpecialBlock<Water> {
     [[nodiscard]] bool transparent() const override { return true; }
     [[nodiscard]] bool fluid() const override { return true; }
     const SpecialFace faces[6] = {
-        {.facing = 0, .firstTex = 120, .lastTex = 125, .remainTick = 100},
-        {.facing = 1, .firstTex = 120, .lastTex = 125, .remainTick = 100},
-        {.facing = 2, .firstTex = 120, .lastTex = 125, .remainTick = 100},
-        {.facing = 3, .firstTex = 120, .lastTex = 125, .remainTick = 100},
-        {.facing = 4, .firstTex = 120, .lastTex = 125, .remainTick = 100},
-        {.facing = 5, .firstTex = 120, .lastTex = 125, .remainTick = 100}
+        {.facing = 0, .firstTex = 120, .texLength = 6, .remainTick = 100},
+        {.facing = 1, .firstTex = 120, .texLength = 6, .remainTick = 100},
+        {.facing = 2, .firstTex = 120, .texLength = 6, .remainTick = 100},
+        {.facing = 3, .firstTex = 120, .texLength = 6, .remainTick = 100},
+        {.facing = 4, .firstTex = 120, .texLength = 6, .remainTick = 100},
+        {.facing = 5, .firstTex = 120, .texLength = 6, .remainTick = 100}
+    };
+};
+
+struct WoodenPlank : Block<WoodenPlank> {
+    const Face faces[6] = {
+        {0, 0, 0, 20},
+        {0, 1, 0, 20},
+        {0, 2, 0, 20},
+        {0, 3, 0, 20},
+        {0, 4, 0, 20},
+        {0, 5, 0, 20}
+    };
+};
+
+struct Glass : Block<Glass> {
+    [[nodiscard]] bool fragmentary() const override { return true; }
+    [[nodiscard]] bool cast_sunlight() const override { return false; }
+    const Face faces[6] = {
+        {0, 0, 0, 32},
+        {0, 1, 0, 32},
+        {0, 2, 0, 32},
+        {0, 3, 0, 32},
+        {0, 4, 0, 32},
+        {0, 5, 0, 32}
+    };
+};
+
+struct ColoredGlass : SpecialBlock<ColoredGlass> {
+    [[nodiscard]] bool transparent() const override { return true; }
+    explicit ColoredGlass(int c) : faces{
+        {.facing = 0, .firstTex = 33 + (float)c},
+        {.facing = 1, .firstTex = 33 + (float)c},
+        {.facing = 2, .firstTex = 33 + (float)c},
+        {.facing = 3, .firstTex = 33 + (float)c},
+        {.facing = 4, .firstTex = 33 + (float)c},
+        {.facing = 5, .firstTex = 33 + (float)c}
+    } {}
+    SpecialFace faces[6];
+};
+
+struct GlassNT : SpecialBlock<GlassNT> {
+    [[nodiscard]] bool transparent() const override { return true; }
+    [[nodiscard]] bool cast_sunlight() const override { return false; }
+    const SpecialFace faces[6] = {
+        {.facing = 0, .firstTex = 33, .texLength = 3, .remainTick = 100},
+        {.facing = 1, .firstTex = 33, .texLength = 3, .remainTick = 100},
+        {.facing = 2, .firstTex = 33, .texLength = 3, .remainTick = 100},
+        {.facing = 3, .firstTex = 33, .texLength = 3, .remainTick = 100},
+        {.facing = 4, .firstTex = 33, .texLength = 3, .remainTick = 100},
+        {.facing = 5, .firstTex = 33, .texLength = 3, .remainTick = 100}
     };
 };
 

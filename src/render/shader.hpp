@@ -93,3 +93,11 @@ public:
     static std::string vertexShaderSource();
     static std::string fragmentShaderSource();
 };
+
+class ScreenShader : public Shader {
+public:
+    ScreenShader();
+
+    static std::string vertexShaderSource();
+    static std::string fragmentShaderSource();
+};

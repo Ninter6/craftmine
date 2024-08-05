@@ -9,7 +9,7 @@ layout (location = 4) in float posOffset;
 layout (location = 5) in float lightIntensity;
 layout (location = 6) in vec4 color;
 layout (location = 7) in float firstTex;
-layout (location = 8) in float lastTex;
+layout (location = 8) in float texLength;
 layout (location = 9) in float remain;
 
 out vec2 fuv;
@@ -70,9 +70,9 @@ const vec3 N[6] = vec3[6](
 
 void calcu_uv() {
     float t = fract(acos(normalize(sunDir.xy).x) / 3.141593f * tick_per_half_day / remain);
-    float g = mix(firstTex, lastTex + 1, t);
+    float g = mix(firstTex, firstTex + texLength, t);
     float fg = floor(g);
-    float cg = ceil(g) > lastTex ? firstTex : ceil(g);
+    float cg = ceil(g) > (firstTex + texLength - 1) ? firstTex : ceil(g);
     tex_t = g - fg;
     vec2 uv1 = vec2(fract(fg / map_size)*map_size, floor(fg / map_size));
     vec2 uv2 = vec2(fract(cg / map_size)*map_size, floor(cg / map_size));

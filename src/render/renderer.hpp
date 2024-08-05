@@ -38,7 +38,9 @@ private:
     std::unique_ptr<Shader> cube;
     std::unique_ptr<Shader> sky;
     std::unique_ptr<Shader> sun;
+    std::unique_ptr<Shader> screen;
     std::unique_ptr<Shader> ui;
+    std::unique_ptr<Shader> composite;
 
     std::unique_ptr<VAO> cube_vao;
     std::unique_ptr<CubeVBO> cube_vbo;
@@ -87,6 +89,7 @@ private:
     void init_buffer();
     void init_chunk_buffers();
     void init_texture();
+    void init_oit(int w, int h);
 
     void uninstall_chunk(int index);
     bool try_install_chunk(ChunkPos pos, const ChunkFace& face);

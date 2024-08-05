@@ -13,7 +13,7 @@ Renderer::Renderer(int w, int h) {
     init_camera(w, h);
     init_buffer();
     init_texture();
-    oit = std::make_unique<OIT>(w, h);
+    init_oit(w, h);
 }
 
 void Renderer::init_shader() {
@@ -22,7 +22,9 @@ void Renderer::init_shader() {
     cube = std::make_unique<CubeShader>();
     sky = std::make_unique<SkyShader>();
     sun = std::make_unique<SunShader>();
+    screen = std::make_unique<ScreenShader>();
     ui = std::make_unique<UIShader>();
+    composite = std::make_unique<CompositeShader>();
 }
 
 void Renderer::init_camera(int w, int h) {
@@ -95,8 +97,8 @@ void Renderer::init_chunk_buffers() {
     glEnableVertexAttribArray(7); // firstTex
     glVertexAttribPointer(7, 1, GL_FLOAT, GL_FALSE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, firstTex));
     glVertexAttribDivisor(7, 1);
-    glEnableVertexAttribArray(8); // lastTex
-    glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, lastTex));
+    glEnableVertexAttribArray(8); // texLength
+    glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, texLength));
     glVertexAttribDivisor(8, 1);
     glEnableVertexAttribArray(9); // remainTick
     glVertexAttribPointer(9, 1, GL_FLOAT, GL_FALSE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, remainTick));
@@ -118,11 +120,17 @@ void Renderer::init_texture() {
 
 void Renderer::init_event(Window& window, Eventor& eventor) {
     window.window.framebufferSizeEvent.setCallback([&](auto&& win, int w, int h) {
+        window.size = {w, h};
         glViewport(0, 0, w, h);
+        init_oit(w, h);
         camera->resetAspect((float)w / (float)h);
     });
 
     camera->init_event(eventor);
+}
+
+void Renderer::init_oit(int w, int h) {
+    oit = std::make_unique<OIT>(w, h, composite.get());
 }
 
 void Renderer::render(const DrawData& draw_data) {
@@ -188,9 +196,7 @@ void Renderer::render_pass_2D(const DrawData& draw_data) {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    ui->use();
-    oit->bind_final_tex(7);
-
+    screen->use();
     main_mesh->bind();
     glDrawArrays(GL_TRIANGLES, 0, 6);
 

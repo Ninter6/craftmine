@@ -13,7 +13,7 @@
 
 class OIT {
 public:
-    OIT(int w, int h);
+    OIT(int w, int h, Shader* comp);
     ~OIT();
 
     OIT(OIT&&) = delete;
@@ -28,5 +28,5 @@ private:
     GLuint fbo;
     GLuint opaque, accumulation, revealage, depth;
 
-    std::unique_ptr<Shader> comp;
+    Shader* comp;
 };

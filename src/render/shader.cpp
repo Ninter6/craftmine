@@ -248,3 +248,22 @@ std::string UIShader::fragmentShaderSource() {
         std::istreambuf_iterator<char>{}
     };
 }
+
+ScreenShader::ScreenShader()
+: Shader(vertexShaderSource(), fragmentShaderSource()) {}
+
+std::string ScreenShader::vertexShaderSource() {
+    std::ifstream vert{FILE_ROOT"shaders/screen_fxaa.vsh"};
+    return {
+        std::istreambuf_iterator<char>{vert},
+        std::istreambuf_iterator<char>{}
+    };
+}
+
+std::string ScreenShader::fragmentShaderSource() {
+    std::ifstream frag{FILE_ROOT"shaders/screen_fxaa.fsh"};
+    return {
+        std::istreambuf_iterator<char>{frag},
+        std::istreambuf_iterator<char>{}
+    };
+}

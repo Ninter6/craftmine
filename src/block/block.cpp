@@ -23,6 +23,12 @@ BlockBase* blocks[(size_t)BlockType::MAX_BLOCKS] = {
     new Dandelion,
     new Shrub,
     new Water,
+    new WoodenPlank,
+    new Glass,
+    new ColoredGlass(0), // red
+    new ColoredGlass(1), // green
+    new ColoredGlass(2), // blue
+    new GlassNT,
 };
 
 BlockBase* get_block(BlockType type) {

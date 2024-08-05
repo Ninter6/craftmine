@@ -40,8 +40,8 @@ struct SpecialFace {
     uint32_t color = color_u32{255};
 
     float firstTex{};
-    float lastTex{};
-    float remainTick{};
+    float texLength{};
+    float remainTick{9e9f};
 };
 
 struct ChunkPos {
