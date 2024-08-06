@@ -6,6 +6,13 @@
 
 #include <map>
 
+basic_ui::basic_ui(mathpls::vec2 pos, mathpls::vec2 scale, float index)
+: pos(pos), scale(scale), index(index) {}
+
+std::vector<ui_unit> basic_ui::get_units() const {
+    return {{.pos = pos, .scale = scale, .texIndex = index, .texture = 7}};
+}
+
 HotBar::HotBar(int length, float size, float y)
 : bar(length), size(size), y(y) {
     constexpr BlockType B[] {
@@ -85,6 +92,8 @@ size_t UIManager::add_widget(const std::shared_ptr<ui_widget>& widget) {
 }
 
 void UIManager::render_ui(Shader* sh) {
+    if (widgets.empty()) return;
+
     std::map<int, std::vector<ui_unit>> map;
     for (auto& widget : widgets)
         for (auto& unit : widget->get_units())

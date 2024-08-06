@@ -12,7 +12,7 @@ auto GLFW = glfw::init();
 
 Window::Window(const WindowInfo& info) : size(info.extent) {
     init_window(info);
-    init_render(info.extent.x, info.extent.y);
+    init_render(size.x, size.y);
     init_world();
     init_event();
 }
@@ -51,6 +51,7 @@ void Window::init_render(int w, int h) {
     hotbar = std::make_unique<HotBar>(9);
     ui = std::make_unique<UIManager>(*renderer->quad_vbo);
     ui->add_widget(hotbar);
+    ui->add_widget(std::shared_ptr<ui_widget>{new basic_ui{-.05f, .1f, 2}});
 }
 
 void Window::init_world() {
@@ -69,10 +70,14 @@ void Window::init_event() {
         )
     );
 
-    eventor->add_event({{}, {}, 256}, [&, cur = false](auto&& lsn) mutable {
+    eventor->add_event({0, 0, 256, 0}, [&, cur = false](auto&& lsn) mutable {
         if (!lsn.IsKeyPressed(256)) return;
         cur = !cur;
         window.setInputModeCursor(cur ? glfw::CursorMode::Normal : glfw::CursorMode::Disabled);
+    });
+    eventor->add_event({0, 0, 'V', 0}, [&](auto&& lsn) {
+        if (!lsn.IsKeyPressed('V')) return;
+        ui_visible = !ui_visible;
     });
 
     renderer->init_event(*this, *eventor);
@@ -114,5 +119,5 @@ void Window::update() {
 
 void Window::render() {
     renderer->render(world->get_draw_data());
-    ui->render_ui(renderer->ui.get());
+    if (ui_visible) ui->render_ui(renderer->ui.get());
 }

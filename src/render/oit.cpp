@@ -50,7 +50,7 @@ OIT::OIT(int w, int h, Shader* comp) : comp(comp) {
     glBindTexture(GL_TEXTURE_2D, accumulation);
     glActiveTexture(GL_TEXTURE6);
     glBindTexture(GL_TEXTURE_2D, revealage);
-    glActiveTexture(GL_TEXTURE7);
+    glActiveTexture(GL_TEXTURE8);
 }
 
 OIT::~OIT() {

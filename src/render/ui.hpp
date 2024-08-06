@@ -16,7 +16,7 @@
 
 struct ui_unit {
     mathpls::vec2 pos; // [-1, 1]
-    mathpls::vec2 scale;
+    mathpls::vec2 scale = 1;
     float priority = 1; // [1, ...]
     float texIndex;
     int texture; // 0: block, 7: ui
@@ -25,6 +25,15 @@ struct ui_unit {
 struct ui_widget {
     virtual ~ui_widget() = default;
     virtual std::vector<ui_unit> get_units() const = 0;
+};
+
+struct basic_ui : ui_widget {
+    basic_ui(mathpls::vec2 pos, mathpls::vec2 scale, float index);
+    std::vector<ui_unit> get_units() const override;
+
+    mathpls::vec2 pos; // [-1, 1]
+    mathpls::vec2 scale;
+    float index;
 };
 
 struct HotBar : ui_widget {

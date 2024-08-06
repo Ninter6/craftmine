@@ -15,7 +15,7 @@ const float map_size = 12;
 
 void main() {
     vec2 p = pos + vert * scale * vec2(1, aspect);
-    gl_Position = vec4(p / priority, 0.0, 1.0 / priority);
+    gl_Position = vec4(p, 0, 1.0);
 
     float g = texIndex / map_size;
     vec2 uvOffset = vec2(fract(g)*map_size, floor(g));

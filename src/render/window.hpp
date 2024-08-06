@@ -30,6 +30,7 @@ private:
 
     std::unique_ptr<Renderer> renderer{};
     std::unique_ptr<UIManager> ui{};
+    bool ui_visible = true;
 
     std::shared_ptr<HotBar> hotbar{};
 

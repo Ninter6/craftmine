@@ -19,7 +19,7 @@ vec2 get_uv(vec3 f_dir) {
     float cy = sqrt(1-f_dir.y*f_dir.y);
     vec2 uv;
     uv.y = asin(f_dir.y) / 1.58;
-    uv.x = atan(f_dir.x / cy, f_dir.z / cy) / 6.3 + 0.5;
+    uv.x = 0.5 - atan(f_dir.x / cy, f_dir.z / cy) / 6.3;
     return uv;
 }
 
@@ -40,7 +40,7 @@ vec4 calcu_sky(vec2 l_uv, float sun_t) {
 }
 
 vec4 calcu_star(vec2 uv, float t) {
-    vec4 col = texture(star, vec2(uv.x + t/1919.810, uv.y)) * max((0.5 - sunI) / 0.3, 0);
+    vec4 col = texture(star, vec2(uv.x + t/1919.810, uv.y)) * max((0.2 - sunI) * 5, 0);
     return mix(vec4(0.012, 0.02, 0.04, 1.0), col, smoothstep(0, 0.2, uv.y));
 }
 
@@ -51,7 +51,7 @@ void main() {
     vec2 uv = get_uv(f_dir);
     vec2 l_uv = vec2(uv.x, max(uv.y, 0));
 
-    float sun_t = acos(sun_dir.x) + 3.14159 * step(sunI, 0.5);
+    float sun_t = acos(sun_dir.x) + 3.14159 * step(sunI, 0.229); // floating point error
     sun_t *= 180.0 / 3.14159;
 
     color = calcu_sky(l_uv, sun_t) + calcu_star(uv, sun_t);

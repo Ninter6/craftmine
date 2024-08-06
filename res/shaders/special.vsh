@@ -87,6 +87,7 @@ void main() {
 
     calcu_uv();
 
-    float S = (max(dot(N[facing], sunDir), 0) * 0.4 + 0.6) * sunI * pow(lightIntensity, sunI);
-    fragColor = vec4(color.rgb * S, color.a);
+    float sl = max(dot(N[facing], sunDir), 0) * 0.4 + 0.6;
+    float I = sl * sunI * lightIntensity + 0.157f;
+    fragColor = vec4(color.rgb * I, color.a);
 }

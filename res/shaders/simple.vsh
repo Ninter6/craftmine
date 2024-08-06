@@ -74,6 +74,7 @@ void main() {
     vec2 uvOffset = vec2(fract(g)*map_size, floor(g));
     fragUV = (1.0 - uv + uvOffset) / map_size;
 
-    float S = (max(dot(N[facing], sunDir), 0) * 0.4 + 0.6) * sunI * pow(lightIntensity, sunI);
-    fragColor = vec4(color.rgb * S, color.a);
+    float sl = max(dot(N[facing], sunDir), 0) * 0.4 + 0.6;
+    float I = sl * sunI * lightIntensity + 0.157f;
+    fragColor = vec4(color.rgb * I, color.a);
 }

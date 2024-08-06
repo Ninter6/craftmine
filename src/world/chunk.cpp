@@ -178,7 +178,7 @@ float Chunk::calcu_sun_intensity(int facing, int y, int z, int x) const {
         default:
             break;
     }
-    return y < h ? .314f : 1.f;
+    return y < h ? 0.f : 1.f;
 }
 
 void Chunk::get_block_face(int y, int z, int x, FaceMask mask, ChunkFace& cf) const {

@@ -178,10 +178,11 @@ void World::update() {
 void calcu_sun(const Ticker& tk, mathpls::vec3& dir, float& I) {
     float t = (float) tk.now / (float) tk.tick_per_day * 2;
     if (t > 1) {
-        I = 76.8f * std::pow(t - 1.5f, 8.f) + .2f;
+        I = 52428.8f * std::pow(t - 1.5f, 18.f);
         t -= 1;
     } else
-        I = -179.2f * std::pow(t - .5f, 8.f) + 1.2f;
+        I = -204.8f * std::pow(t - .5f, 8.f) + 1.f;
+    I = I * .9f + .05f;
     dir = {cos(t * 3.1416f), sin(t * 3.1416f), cos(3.14f*tk.day/180)*.3f};
     dir.normalize();
 }
