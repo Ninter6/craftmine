@@ -13,6 +13,7 @@
 struct BlockData {
     BlockType type = BlockType::air;
     FaceMask neighbors = 0b111111;
+    int16_t brightness = 0;
 };
 
 using Plane = mathpls::mat<BlockData, 16, 16>;
@@ -34,8 +35,21 @@ struct Chunk {
 
     void raise_height(float y); // raise to the smallest sum of 64 that large than y
 
+    struct chunk_neighbor_r {
+        Chunk* c = nullptr;
+        int y, z, x;
+    };
+    chunk_neighbor_r find_chunk_neighbor(int x, int y, int z); // accept pos not within [0, 15]
+
     BlockType get_block(mathpls::ivec3 pos) const;
     void set_block(mathpls::ivec3 pos, BlockType type);
+
+    void check_highmap(mathpls::ivec3 pos, BlockType type);
+    void check_neighbor(mathpls::ivec3 pos, BlockBase* o, BlockBase* n);
+    void check_brightness(mathpls::ivec3 pos, int16_t o, int16_t n);
+
+    void load_brightness(int y, int z, int x, int16_t e);
+    void unload_brightness(int y, int z, int x, int16_t e);
 
     BlockBase* get_block(int y, int z, int x) const;
 
@@ -51,6 +65,7 @@ struct Chunk {
     void new_neighbor(int y, int z, int x); // reverse the neighbor value of blocks around the center block
 
     float calcu_sun_intensity(int facing, int y, int z, int x) const;
+    float brightness(int facing, int y, int z, int x) const;
 
     void get_block_face(int y, int z, int x, FaceMask mask, ChunkFace& cf) const;
 

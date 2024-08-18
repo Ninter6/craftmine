@@ -28,7 +28,8 @@ struct Face {
     int facing{};
     float posOffset{};
     float texIndex{};
-    float sunIntensity = 1.f;
+    uint16_t sunIntensity = UINT16_MAX;
+    uint16_t lightIntensity = 0;
     uint32_t color = color_u32{255};
 };
 
@@ -36,7 +37,8 @@ struct SpecialFace {
     mathpls::vec3 pos{};
     int facing{};
     float posOffset{};
-    float sunIntensity = 1.f;
+    uint16_t sunIntensity = UINT16_MAX;
+    uint16_t lightIntensity = 0;
     uint32_t color = color_u32{255};
 
     float firstTex{};

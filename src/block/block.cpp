@@ -29,6 +29,9 @@ BlockBase* blocks[(size_t)BlockType::MAX_BLOCKS] = {
     new ColoredGlass(1), // green
     new ColoredGlass(2), // blue
     new GlassNT,
+    new Torch,
+
+    new Brightness<24>
 };
 
 BlockBase* get_block(BlockType type) {

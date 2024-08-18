@@ -19,7 +19,7 @@ HotBar::HotBar(int length, float size, float y)
         BlockType::stone,
         BlockType::wooden_plank,
         BlockType::log,
-        BlockType::glass_nt,
+        BlockType::torch,
         BlockType::glass_red,
         BlockType::glass_green,
         BlockType::glass_blue,

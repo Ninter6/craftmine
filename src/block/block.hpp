@@ -34,6 +34,9 @@ enum class BlockType : uint8_t {
     glass_green,
     glass_blue,
     glass_nt,
+    torch,
+
+    brightness,
 
     MAX_BLOCKS
 };
@@ -54,12 +57,15 @@ struct BlockBase {
     [[nodiscard]] virtual bool renderable() const { return true; }
 
     [[nodiscard]] virtual bool fragmentary() const { return false; } // if one isn't renderable, this should be true
-    [[nodiscard]] virtual bool cast_sunlight() const { return true; }
+    [[nodiscard]] virtual bool cast_light() const { return true; }
     [[nodiscard]] virtual bool collidable() const { return true; }
 
     [[nodiscard]] virtual bool special() const { return false; }
     [[nodiscard]] virtual bool transparent() const { return false; }
     [[nodiscard]] virtual bool fluid() const { return false; }
+
+    static constexpr float max_emission = 25;
+    [[nodiscard]] virtual int emission() const { return 0; }
 
     [[nodiscard]] virtual std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const = 0;
     [[nodiscard]] virtual std::array<std::optional<SpecialFace>, 6> get_special_faces(FaceMask mask) const = 0;
@@ -102,11 +108,16 @@ struct Air : BlockBase {
     [[nodiscard]] bool renderable() const override { return false; }
 
     [[nodiscard]] bool fragmentary() const override { return true; }
-    [[nodiscard]] bool cast_sunlight() const override { return false; }
+    [[nodiscard]] bool cast_light() const override { return false; }
     [[nodiscard]] bool collidable() const override { return false; }
 
     [[nodiscard]] std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const override { return {}; }
     [[nodiscard]] std::array<std::optional<SpecialFace>, 6> get_special_faces(FaceMask mask) const override { return {}; }
+};
+
+template <int E>
+struct Brightness : Air {
+    [[nodiscard]] int emission() const override { return E; }
 };
 
 struct GrassBlock : Block<GrassBlock> {
@@ -223,12 +234,11 @@ struct PineLeaf : Block<PineLeaf> {
 
 template <class T>
 struct Decoration : Block<T> {
-    [[nodiscard]] bool cast_sunlight() const override { return false; }
+    [[nodiscard]] bool fragmentary() const override { return true; }
+    [[nodiscard]] bool cast_light() const override { return false; }
 };
 
 struct Grass : Decoration<Grass> {
-    [[nodiscard]] bool fragmentary() const override { return true; }
-
     [[nodiscard]] std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const override {
         return {faces[0], faces[1], faces[2], faces[3]};
     }
@@ -242,8 +252,6 @@ struct Grass : Decoration<Grass> {
 };
 
 struct Rose : Decoration<Rose> {
-    [[nodiscard]] bool fragmentary() const override { return true; }
-
     [[nodiscard]] std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const override {
         return {faces[0], faces[1], faces[2], faces[3]};
     }
@@ -257,8 +265,6 @@ struct Rose : Decoration<Rose> {
 };
 
 struct Dandelion : Decoration<Dandelion> {
-    [[nodiscard]] bool fragmentary() const override { return true; }
-
     [[nodiscard]] std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const override {
         return {faces[0], faces[1], faces[2], faces[3]};
     }
@@ -272,7 +278,6 @@ struct Dandelion : Decoration<Dandelion> {
 };
 
 struct Shrub : Decoration<Shrub> {
-    [[nodiscard]] bool fragmentary() const override { return true; }
     [[nodiscard]] std::array<std::optional<Face>, 6> get_faces(FaceMask mask) const override {
         return {faces[0], faces[1], faces[2], faces[3]};
     }
@@ -310,40 +315,52 @@ struct WoodenPlank : Block<WoodenPlank> {
 
 struct Glass : Block<Glass> {
     [[nodiscard]] bool fragmentary() const override { return true; }
-    [[nodiscard]] bool cast_sunlight() const override { return false; }
+    [[nodiscard]] bool cast_light() const override { return false; }
     const Face faces[6] = {
-        {0, 0, 0, 32},
-        {0, 1, 0, 32},
-        {0, 2, 0, 32},
-        {0, 3, 0, 32},
-        {0, 4, 0, 32},
-        {0, 5, 0, 32}
+        {0, 0, 0, 36},
+        {0, 1, 0, 36},
+        {0, 2, 0, 36},
+        {0, 3, 0, 36},
+        {0, 4, 0, 36},
+        {0, 5, 0, 36}
     };
 };
 
 struct ColoredGlass : SpecialBlock<ColoredGlass> {
     [[nodiscard]] bool transparent() const override { return true; }
     explicit ColoredGlass(int c) : faces{
-        {.facing = 0, .firstTex = 33 + (float)c},
-        {.facing = 1, .firstTex = 33 + (float)c},
-        {.facing = 2, .firstTex = 33 + (float)c},
-        {.facing = 3, .firstTex = 33 + (float)c},
-        {.facing = 4, .firstTex = 33 + (float)c},
-        {.facing = 5, .firstTex = 33 + (float)c}
+        {.facing = 0, .firstTex = 37 + (float)c},
+        {.facing = 1, .firstTex = 37 + (float)c},
+        {.facing = 2, .firstTex = 37 + (float)c},
+        {.facing = 3, .firstTex = 37 + (float)c},
+        {.facing = 4, .firstTex = 37 + (float)c},
+        {.facing = 5, .firstTex = 37 + (float)c}
     } {}
     SpecialFace faces[6];
 };
 
 struct GlassNT : SpecialBlock<GlassNT> {
     [[nodiscard]] bool transparent() const override { return true; }
-    [[nodiscard]] bool cast_sunlight() const override { return false; }
+    [[nodiscard]] bool cast_light() const override { return false; }
     const SpecialFace faces[6] = {
-        {.facing = 0, .firstTex = 33, .texLength = 3, .remainTick = 100},
-        {.facing = 1, .firstTex = 33, .texLength = 3, .remainTick = 100},
-        {.facing = 2, .firstTex = 33, .texLength = 3, .remainTick = 100},
-        {.facing = 3, .firstTex = 33, .texLength = 3, .remainTick = 100},
-        {.facing = 4, .firstTex = 33, .texLength = 3, .remainTick = 100},
-        {.facing = 5, .firstTex = 33, .texLength = 3, .remainTick = 100}
+        {.facing = 0, .firstTex = 37, .texLength = 3, .remainTick = 100},
+        {.facing = 1, .firstTex = 37, .texLength = 3, .remainTick = 100},
+        {.facing = 2, .firstTex = 37, .texLength = 3, .remainTick = 100},
+        {.facing = 3, .firstTex = 37, .texLength = 3, .remainTick = 100},
+        {.facing = 4, .firstTex = 37, .texLength = 3, .remainTick = 100},
+        {.facing = 5, .firstTex = 37, .texLength = 3, .remainTick = 100}
+    };
+};
+
+struct Torch : Decoration<Torch> {
+    [[nodiscard]] int emission() const override { return 15; }
+    const Face faces[6] = {
+        {0, 0, .375f, 28},
+        {0, 1, .375f, 28},
+        {0, 2, .375f, 28},
+        {0, 3, .375f, 28},
+        {0, 4, .25f, 29},
+        {0, 5, 0, 29}
     };
 };
 

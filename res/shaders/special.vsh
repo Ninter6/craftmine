@@ -6,11 +6,12 @@ layout (location = 1) in vec2 uv;
 layout (location = 2) in vec3 pos;
 layout (location = 3) in int facing;
 layout (location = 4) in float posOffset;
-layout (location = 5) in float lightIntensity;
+layout (location = 5) in float sunIntensity;
 layout (location = 6) in vec4 color;
 layout (location = 7) in float firstTex;
 layout (location = 8) in float texLength;
 layout (location = 9) in float remain;
+layout (location = 10)in float lightIntensity;
 
 out vec2 fuv;
 out vec2 cuv;
@@ -88,6 +89,6 @@ void main() {
     calcu_uv();
 
     float sl = max(dot(N[facing], sunDir), 0) * 0.4 + 0.6;
-    float I = sl * sunI * lightIntensity + 0.157f;
+    float I = max(sl * sunI * sunIntensity, lightIntensity) + 0.157f;
     fragColor = vec4(color.rgb * I, color.a);
 }

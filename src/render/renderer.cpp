@@ -71,11 +71,14 @@ void Renderer::init_chunk_buffers() {
     glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(Face), (void*)offsetof(Face, texIndex));
     glVertexAttribDivisor(5, 1);
     glEnableVertexAttribArray(6); // sunIntensity
-    glVertexAttribPointer(6, 1, GL_FLOAT, GL_FALSE, sizeof(Face), (void*)offsetof(Face, sunIntensity));
+    glVertexAttribPointer(6, 1, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(Face), (void*)offsetof(Face, sunIntensity));
     glVertexAttribDivisor(6, 1);
-    glEnableVertexAttribArray(7); // color
-    glVertexAttribPointer(7, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Face), (void*)offsetof(Face, color));
+    glEnableVertexAttribArray(7); // lightIntensity
+    glVertexAttribPointer(7, 1, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(Face), (void*)offsetof(Face, lightIntensity));
     glVertexAttribDivisor(7, 1);
+    glEnableVertexAttribArray(8); // color
+    glVertexAttribPointer(8, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Face), (void*)offsetof(Face, color));
+    glVertexAttribDivisor(8, 1);
 
     special_mesh = std::make_unique<Mesh>(true);
     special_mesh->bind();
@@ -92,7 +95,7 @@ void Renderer::init_chunk_buffers() {
     glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, posOffset));
     glVertexAttribDivisor(4, 1);
     glEnableVertexAttribArray(5); // sunIntensity
-    glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, sunIntensity));
+    glVertexAttribPointer(5, 1, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, sunIntensity));
     glVertexAttribDivisor(5, 1);
     glEnableVertexAttribArray(6); // color
     glVertexAttribPointer(6, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, color));
@@ -106,6 +109,9 @@ void Renderer::init_chunk_buffers() {
     glEnableVertexAttribArray(9); // remainTick
     glVertexAttribPointer(9, 1, GL_FLOAT, GL_FALSE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, remainTick));
     glVertexAttribDivisor(9, 1);
+    glEnableVertexAttribArray(10); // lightIntensity
+    glVertexAttribPointer(10, 1, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(SpecialFace), (void*)offsetof(SpecialFace, lightIntensity));
+    glVertexAttribDivisor(10, 1);
 }
 
 void Renderer::init_texture() {
