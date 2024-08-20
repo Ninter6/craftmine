@@ -877,25 +877,25 @@ constexpr auto clamp(vec<T, N> v, T min, T max) {
 
 template <class T, unsigned int N>
 constexpr auto floor(vec<T, N> v) {
-    for (auto&& i : v) i = floor<T>(i);
+    for (auto&& i : v) i = floor(i);
     return v;
 }
 
 template <class T, unsigned int N>
 constexpr auto ceil(vec<T, N> v) {
-    for (auto&& i : v) i = ceil<T>(i);
+    for (auto&& i : v) i = ceil(i);
     return v;
 }
 
 template <class T, unsigned int N>
 constexpr auto round(vec<T, N> v) {
-    for (auto&& i : v) i = round<T>(i);
+    for (auto&& i : v) i = round(i);
     return v;
 }
 
 template <class T, unsigned int N>
 constexpr auto fract(vec<T, N> v) {
-    for (auto&& i : v) i = fract<T>(i);
+    for (auto&& i : v) i = fract(i);
     return v;
 }
 
@@ -1338,7 +1338,7 @@ struct rand_seq {
     rand_seq(unsigned int seed) : rand_seq(seed, seed + 1) {}
 
     unsigned int next() {
-        return permuteQPR((permuteQPR(m_index++) + m_intermediateOffset) ^ 0x5bf03635);
+        return (*this)[m_index++];
     }
 
     unsigned int operator()() {
