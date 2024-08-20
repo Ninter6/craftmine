@@ -3,6 +3,7 @@
 //
 
 #include <cassert>
+#include <utility>
 #include <queue>
 
 #include "chunk.hpp"

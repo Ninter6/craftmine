@@ -2,6 +2,8 @@
 // Created by Ninter6 on 2024/7/18.
 //
 
+#include <stdexcept>
+
 #include "texture.hpp"
 
 #include "stb_image.h"
