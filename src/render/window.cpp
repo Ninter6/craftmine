@@ -55,8 +55,23 @@ void Window::init_render(int w, int h) {
 }
 
 void Window::init_world() {
+    uint32_t c, seed = 114514;
+    std::string file, name;
+    std::cout << "Type to choose:\n" "0. load world\n" "1. new world\n> ";
+    std::cin >> c;
+    if (c) {
+        std::cout << "Type your world's name:\n> ";
+        std::cin >> name;
+        std::cout << "Type seed:\n> ";
+        std::cin >> seed;
+    } else {
+        std::cout << "Type your world's name or full path to your file:\n> ";
+        std::cin >> file;
+    }
     world = std::make_unique<World>(WorldInitInfo{
-        .seed = 114514,
+        .file = c ? "" : file.ends_with(".cmw") ? std::move(file) : worldname2filename(file),
+        .name = name.empty() ? "myworld" : std::move(name),
+        .seed = seed,
         .camera = renderer->getCamera()
     });
 }
@@ -78,6 +93,9 @@ void Window::init_event() {
     eventor->add_event({0, 0, 'V', 0}, [&](auto&& lsn) {
         if (!lsn.IsKeyPressed('V')) return;
         ui_visible = !ui_visible;
+    });
+    eventor->add_event({4, 0, 'S', 0}, [&](auto&& lsn) {
+        world->save();
     });
 
     renderer->init_event(*this, *eventor);

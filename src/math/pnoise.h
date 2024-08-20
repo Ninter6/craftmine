@@ -8,14 +8,15 @@
 
 #include <cmath>
 #include <cstdint>
-#include <algorithm>
+#include <numeric>
 
 struct PNoise {
     explicit PNoise(uint32_t seed, float repeat = 0) : repeat(repeat) {
+        std::iota(p, p + 256, 0);
         mathpls::random::xor_shift32 e{seed};
-        for (int i = 0; i < 256; i++)
-            p[i] = e() & 255;
-        memcpy(p + 256, p, 256);
+        for (int i = 256; i > 0; --i)
+            std::swap(p[i-1], p[e() % i]);
+        std::memcpy(p + 256, p, 256);
     }
 
     float operator()(float x, float y, float z) const {

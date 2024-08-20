@@ -96,8 +96,9 @@ mathpls::mat<int, 16, 16> WorldGen::gen_height_map(Heightmap& high, ChunkPos pos
             auto biome_id = get_biome(h, m, t, n, n + h);
             auto& biome = biome_data[biome_id];
 
+            n = std::pow(2.f, n) - 1;
             h = (0 < h ? 1.f : -1.f) * std::pow(std::abs(h), biome.exp);
-            h = ((h * 8.0f) + (n * 64.0f)) * biome.scale + (biome.roughness * r * 2.0f);
+            h = ((h * 8.0f) + (n * 96.0f)) * biome.scale + (biome.roughness * r * 2.0f);
 
             fh[i][j] = h + SEA_LEVEL;
             b[i][j] = biome_id;

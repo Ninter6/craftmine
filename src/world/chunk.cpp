@@ -24,9 +24,9 @@ ChunkFace Chunk::get_render_faces() const {
 }
 
 void Chunk::raise_height(float y) {
-    assert(y > 0);
+    assert(y >= 0);
     if (y < blocks.size()) return;
-    blocks.resize((size_t)(std::ceil(y/(63.99))*64), Plane::zero());
+    blocks.resize((size_t)(std::ceil(y/63.99f)*64), Plane::zero());
 }
 
 Chunk::chunk_neighbor_r Chunk::find_chunk_neighbor(int y, int z, int x) {
@@ -45,8 +45,7 @@ Chunk::chunk_neighbor_r Chunk::find_chunk_neighbor(int y, int z, int x) {
 
 BlockType Chunk::get_block(mathpls::ivec3 pos) const {
     assert(0 <= pos.x && pos.x < 16 && 0 <= pos.z && pos.z < 16);
-    if (0 < pos.y && pos.y >= blocks.size()) return BlockType::air;
-    return blocks[pos.y][pos.z][pos.x].type;
+    return block_type(pos.y, pos.z, pos.x);
 }
 
 void Chunk::set_block(mathpls::ivec3 pos, BlockType type) {
@@ -163,8 +162,22 @@ void Chunk::unload_brightness(int y, int z, int x, int16_t e) {
 }
 
 BlockBase* Chunk::get_block(int y, int z, int x) const {
-    if (y >= blocks.size()) return ::get_block(BlockType::air);
-    return ::get_block(blocks[y][z][x].type);
+    return ::get_block(block_type(y, z, x));
+}
+
+BlockType Chunk::block_type(int y, int z, int x) const {
+    if (y >= blocks.size() || y < 0) return BlockType::air;
+    return blocks[y][z][x].type;
+}
+
+FaceMask Chunk::block_neighbors(int y, int z, int x) const {
+    if (y >= blocks.size() || y < 0) return 0b111111;
+    return blocks[y][z][x].neighbors;
+}
+
+int16_t Chunk::block_brightness(int y, int z, int x) const {
+    if (y >= blocks.size() || y < 0) return 0;
+    return blocks[y][z][x].brightness;
 }
 
 bool Chunk::is_renderable(int y, int z, int x) const {
@@ -179,6 +192,16 @@ bool Chunk::is_transparent(int y, int z, int x) const {
     return get_block(y, z, x)->transparent();
 }
 
+void Chunk::update_height_map() {
+    for (int z = 0; z < 16; z++)
+        for (int x = 0; x < 16; x++)
+            for (int y = (int)blocks.size(); y > 0; y--)
+                if (get_block(y-1, z, x)->cast_light()) {
+                    high_map[x][z] = y;
+                    break;
+                }
+}
+
 bool is_visible_neighbor(BlockType a, BlockType n) {
     auto&& nb = ::get_block(n);
     return nb->fragmentary() ||
@@ -187,7 +210,7 @@ bool is_visible_neighbor(BlockType a, BlockType n) {
 
 FaceMask Chunk::search_neighbors(int y, int z, int x) const {
 #define BT(y_, z_, x_) (blocks[y_][z_][x_].type)
-#define N_BT(n_, y_, z_, x_) (neighbor[n_]->blocks[y_][z_][x_].type)
+#define N_BT(n_, y_, z_, x_) (neighbor[n_]->block_type(y_, z_, x_))
     if (y >= high_map[x][z]) return 0b111111;
     FaceMask rst = 0;
     auto a = BT(y, z, x);
@@ -287,13 +310,13 @@ float Chunk::brightness(int facing, int y, int z, int x) const {
     auto b = [&]() -> int {
         switch (facing) {
             case 0:
-                return (z == 0 ? (neighbor[2] ? neighbor[2]->blocks[y][15][x].brightness : 0) : blocks[y][z-1][x].brightness);
+                return (z == 0 ? (neighbor[2] ? neighbor[2]->block_brightness(y, 15, x) : 0) : blocks[y][z-1][x].brightness);
             case 1:
-                return (x == 15 ? (neighbor[0] ? neighbor[0]->blocks[y][z][0].brightness : 0) : blocks[y][z][x+1].brightness);
+                return (x == 15 ? (neighbor[0] ? neighbor[0]->block_brightness(y, z, 0) : 0) : blocks[y][z][x+1].brightness);
             case 2:
-                return (z == 15 ? (neighbor[1] ? neighbor[1]->blocks[y][0][x].brightness : 0) : blocks[y][z+1][x].brightness);
+                return (z == 15 ? (neighbor[1] ? neighbor[1]->block_brightness(y, 0, x) : 0) : blocks[y][z+1][x].brightness);
             case 3:
-                return (x == 0 ? (neighbor[3] ? neighbor[3]->blocks[y][z][15].brightness : 0) : blocks[y][z][x-1].brightness);
+                return (x == 0 ? (neighbor[3] ? neighbor[3]->block_brightness(y, z, 15) : 0) : blocks[y][z][x-1].brightness);
             case 4:
                 return y < blocks.size() - 1 ? blocks[y+1][z][x].brightness : 0;
             case 5:

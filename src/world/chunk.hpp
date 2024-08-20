@@ -52,6 +52,9 @@ struct Chunk {
     void unload_brightness(int y, int z, int x, int16_t e);
 
     BlockBase* get_block(int y, int z, int x) const;
+    BlockType block_type(int y, int z, int x) const;
+    FaceMask block_neighbors(int y, int z, int x) const;
+    int16_t block_brightness(int y, int z, int x) const;
 
     bool is_renderable(int y, int z, int x) const;
     bool is_fragmentary(int y, int z, int x) const;

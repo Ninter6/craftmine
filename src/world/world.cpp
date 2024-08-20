@@ -6,10 +6,15 @@
 #include "world.hpp"
 
 World::World(const WorldInitInfo &initInfo) :
-    generator{initInfo.seed},
+    saver{initInfo.file.empty() ?
+        worldname2filename(initInfo.name) : initInfo.file},
     name{initInfo.name},
+    seed{initInfo.seed},
     cam{initInfo.camera}
 {
+    if (!initInfo.file.empty())
+        saver.load(*this);
+    gen = std::make_unique<WorldGen>(seed);
     calcu_camera_chunk();
 }
 
@@ -75,15 +80,20 @@ void World::gen_world(ChunkPos min, ChunkPos max) {
         for (int z = zb; z <= ze; z += 16) {
             ChunkPos p = {x, z};
             if (!is_chunk_initialized(p)) {
-                auto [it, _] = map.emplace(p, generator.generate(this, p));
-                check_preload_block(it->second);
-                neighbor_chunk(it->second, {x + 16, z}, 0);
-                neighbor_chunk(it->second, {x, z + 16}, 1);
-                neighbor_chunk(it->second, {x, z - 16}, 2);
-                neighbor_chunk(it->second, {x - 16, z}, 3);
-                it->second.update_neighbors();
+                new_chunk(p, gen->generate(this, p));
             }
         }
+}
+
+void World::new_chunk(ChunkPos pos, Chunk&& chunk) {
+    auto [it, _] = map.emplace(pos, std::move(chunk));
+    check_preload_block(it->second);
+    auto [x, z] = pos;
+    neighbor_chunk(it->second, {x + 16, z}, 0);
+    neighbor_chunk(it->second, {x, z + 16}, 1);
+    neighbor_chunk(it->second, {x, z - 16}, 2);
+    neighbor_chunk(it->second, {x - 16, z}, 3);
+    it->second.update_neighbors();
 }
 
 void World::neighbor_chunk(Chunk& c, ChunkPos npos, int n) { // NOLINT(*-make-member-function-const)
@@ -220,4 +230,10 @@ std::unordered_map<ChunkPos, ChunkFace> World::get_dirty_chunk_data() {
 std::optional<Chunk*> World::is_chunk_initialized(ChunkPos p) const {
     auto it = map.find(p);
     return it != map.end() ? std::optional<Chunk*>{const_cast<Chunk*>(&it->second)} : std::nullopt;
+}
+
+void World::save() {
+    puts("\n正在保存世界...");
+    saver.save(*this);
+    puts("保存完毕");
 }

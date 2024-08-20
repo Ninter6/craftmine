@@ -10,6 +10,7 @@
 
 #include "chunk.hpp"
 #include "gen/worldgen.hpp"
+#include "gen/worldsaver.hpp"
 
 #include "math/ray.hpp"
 #include "utils/tick.hpp"
@@ -26,6 +27,7 @@ struct PreloadInfo {
 };
 
 struct WorldInitInfo {
+    std::string file = {};
     std::string name = "test";
     uint32_t seed;
     Camera* camera;
@@ -34,6 +36,7 @@ struct WorldInitInfo {
 class World {
 public:
     World(const WorldInitInfo& initInfo);
+    World(std::string_view filename);
 
     BlockType get_block(const mathpls::ivec3& pos) const;
     void set_block(const mathpls::ivec3& pos, BlockType type);
@@ -47,6 +50,7 @@ public:
 
     void gen_world(ChunkPos min, ChunkPos max);
     void gen_camera_sight();
+    void new_chunk(ChunkPos pos, Chunk&& chunk);
     void neighbor_chunk(Chunk& c, ChunkPos npos, int n);
 
     ChunkPos calcu_camera_chunk();
@@ -54,6 +58,7 @@ public:
     void calcu_new_chunk_camera_sight();
 
     void update();
+    void save();
 
     DrawData get_draw_data(); // this will reset chunks' dirty flag
     std::unordered_map<ChunkPos, ChunkFace> get_dirty_chunk_data();
@@ -62,15 +67,19 @@ public:
 
 private:
     std::string name;
+    uint32_t seed;
 
     std::unordered_map<ChunkPos, Chunk> map;
     std::unordered_multimap<ChunkPos, PreloadInfo> preload_blocks;
 
     Ticker ticker{50, 12000};
 
-    WorldGen generator;
+    std::unique_ptr<WorldGen> gen;
+    WorldSaver saver;
 
     Camera* cam;
     ChunkPos camera_chunk{};
     std::pair<ChunkPos, ChunkPos> camera_sight, last_camera_sight;
+
+    friend WorldSaver;
 };
