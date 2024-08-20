@@ -334,22 +334,21 @@ float Chunk::brightness(int facing, int y, int z, int x) const {
 void Chunk::get_block_face(int y, int z, int x, FaceMask mask, ChunkFace& cf) const {
     auto&& b = get_block(y, z, x);
     auto pos = mathpls::vec3(x + position.x, y, z + position.z);
-    int i = 0;
     if (b->special()) {
-        auto bf = b->get_special_faces(mask);
-        while (bf[i]) {
-            bf[i]->pos = pos;
-            bf[i]->sunIntensity = (uint16_t)(calcu_sun_intensity(bf[i]->facing, y, z, x) * UINT16_MAX);
-            bf[i]->lightIntensity = (uint16_t)(brightness(bf[i]->facing, y, z, x) * UINT16_MAX);
-            cf.special_faces.push_back(*bf[i++]);
+        for (auto&& i : b->get_special_faces(mask)) {
+            if (!i) break;
+            i->pos = pos;
+            i->sunIntensity = (uint16_t)(calcu_sun_intensity(i->facing, y, z, x) * UINT16_MAX);
+            i->lightIntensity = (uint16_t)(brightness(i->facing, y, z, x) * UINT16_MAX);
+            cf.special_faces.push_back(*i);
         }
     } else {
-        auto bf = b->get_faces(mask);
-        while (bf[i]) {
-            bf[i]->pos = pos;
-            bf[i]->sunIntensity = (uint16_t)(calcu_sun_intensity(bf[i]->facing, y, z, x) * UINT16_MAX);
-            bf[i]->lightIntensity = (uint16_t)(brightness(bf[i]->facing, y, z, x) * UINT16_MAX);
-            cf.normal_faces.push_back(*bf[i++]);
+        for (auto&& i : b->get_faces(mask)) {
+            if (!i) break;
+            i->pos = pos;
+            i->sunIntensity = (uint16_t)(calcu_sun_intensity(i->facing, y, z, x) * UINT16_MAX);
+            i->lightIntensity = (uint16_t)(brightness(i->facing, y, z, x) * UINT16_MAX);
+            cf.normal_faces.push_back(*i);
         }
     }
 }
