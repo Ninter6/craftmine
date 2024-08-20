@@ -1,6 +1,6 @@
 # craftmine
 ## Overview
-![1A793D7999C185940BB05C227675CE1E.png](https://pic.imge.cc/2024/08/20/66c42a8644b9c.png)
+![](https://files.catbox.moe/g72oqr.png)
 
 ## How to play
 - `WASD`移动
