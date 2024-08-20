@@ -50,7 +50,6 @@ struct SpecialFace {
 struct ChunkPos {
     int32_t x, z;
     bool operator==(const ChunkPos& o) const {return x == o.x && z == o.z;}
-    operator mathpls::vec3() const {return mathpls::vec3(x, 0, z);}
     operator mathpls::ivec3() const {return mathpls::ivec3(x, 0, z);}
 };
 

@@ -333,7 +333,7 @@ float Chunk::brightness(int facing, int y, int z, int x) const {
 
 void Chunk::get_block_face(int y, int z, int x, FaceMask mask, ChunkFace& cf) const {
     auto&& b = get_block(y, z, x);
-    auto pos = mathpls::vec3(position) + mathpls::vec3(x, y, z);
+    auto pos = mathpls::vec3(x + position.x, y, z + position.z);
     int i = 0;
     if (b->special()) {
         auto bf = b->get_special_faces(mask);
