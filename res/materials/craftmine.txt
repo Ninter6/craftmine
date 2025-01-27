@@ -1,0 +1,226 @@
+begin_block(air) // name of the block
+renderable: false
+fragmentary: true
+cast_light: false
+collidable: false
+end_block() // air
+
+begin_block(grass_block)
+face[0]: (1)
+face[1]: (1)
+face[2]: (1)
+face[3]: (1)
+face[4]: (0)
+face[5]: (2)
+end_block() // grass_block
+
+begin_block(dirt)
+face[0]: (2)
+face[1]: (2)
+face[2]: (2)
+face[3]: (2)
+face[4]: (2)
+face[5]: (2)
+end_block() // dirt
+
+begin_block(stone)
+face[0]: (3)
+face[1]: (3)
+face[2]: (3)
+face[3]: (3)
+face[4]: (3)
+face[5]: (3)
+end_block() // stone
+
+begin_block(sand)
+face[0]: (5)
+face[1]: (5)
+face[2]: (5)
+face[3]: (5)
+face[4]: (5)
+face[5]: (5)
+end_block() // sand
+
+begin_block(snow)
+face[0]: (6)
+face[1]: (6)
+face[2]: (6)
+face[3]: (6)
+face[4]: (6)
+face[5]: (6)
+end_block() // snow
+
+begin_block(podzol)
+face[0]: (13)
+face[1]: (13)
+face[2]: (13)
+face[3]: (13)
+face[4]: (12)
+face[5]: (2)
+end_block() // podzol
+
+begin_block(log)
+face[0]: (14)
+face[1]: (14)
+face[2]: (14)
+face[3]: (14)
+face[4]: (15)
+face[5]: (15)
+end_block() // log
+
+begin_block(leaf)
+fragmentary: true
+face[0]: (16)
+face[1]: (16)
+face[2]: (16)
+face[3]: (16)
+face[4]: (16)
+face[5]: (16)
+end_block() // leaf
+
+begin_block(pine_log)
+face[0]: (17)
+face[1]: (17)
+face[2]: (17)
+face[3]: (17)
+face[4]: (18)
+face[5]: (18)
+end_block() // pine_log
+
+begin_block(pine_leaf)
+fragmentary: true
+face[0]: (19)
+face[1]: (19)
+face[2]: (19)
+face[3]: (19)
+face[4]: (19)
+face[5]: (19)
+end_block() // pine_leaf
+
+begin_block(deco) : __virtual
+fragmentary: true
+cast_light: false
+// collidable: false
+end_block() // deco
+
+begin_block(grass) : deco
+face[0]: (24, 0.5)
+face[1]: (24, 0.5)
+face[2]: (24, 0.5)
+face[3]: (24, 0.5)
+end_block() // grass
+
+begin_block(rose) : deco
+face[0]: (25, 0.5)
+face[1]: (25, 0.5)
+face[2]: (25, 0.5)
+face[3]: (25, 0.5)
+end_block() // rose
+
+begin_block(dandelion) : deco
+face[0]: (26, 0.5)
+face[1]: (26, 0.5)
+face[2]: (26, 0.5)
+face[3]: (26, 0.5)
+end_block() // dandelion
+
+begin_block(shrub) : deco
+face[0]: (27, 0.5)
+face[1]: (27, 0.5)
+face[2]: (27, 0.5)
+face[3]: (27, 0.5)
+end_block() // shrub
+
+begin_block(water)
+transparent: true
+fluid: true
+face[0]: {120, 6, 100}
+face[1]: {120, 6, 100}
+face[2]: {120, 6, 100}
+face[3]: {120, 6, 100}
+face[4]: {120, 6, 100}
+face[5]: {120, 6, 100}
+end_block() // water
+
+begin_block(wooden_plank)
+face[0]: (20)
+face[1]: (20)
+face[2]: (20)
+face[3]: (20)
+face[4]: (20)
+face[5]: (20)
+end_block()
+
+begin_block(glass)
+fragmentary: true
+cast_light: false
+face[0]: (36)
+face[1]: (36)
+face[2]: (36)
+face[3]: (36)
+face[4]: (36)
+face[5]: (36)
+end_block() // glass
+
+begin_block(glass_red)
+fragmentary: true
+face[0]: {37}
+face[1]: {37}
+face[2]: {37}
+face[3]: {37}
+face[4]: {37}
+face[5]: {37}
+end_block() // glass_red
+
+begin_block(glass_green)
+fragmentary: true
+face[0]: {38}
+face[1]: {38}
+face[2]: {38}
+face[3]: {38}
+face[4]: {38}
+face[5]: {38}
+end_block() // glass_green
+
+begin_block(glass_blue)
+fragmentary: true
+face[0]: {39}
+face[1]: {39}
+face[2]: {39}
+face[3]: {39}
+face[4]: {39}
+face[5]: {39}
+end_block() // glass_blue
+
+begin_block(glass_nt)
+transparent: true
+cast_light: false
+face[0]: {37, 3, 100}
+face[1]: {37, 3, 100}
+face[2]: {37, 3, 100}
+face[3]: {37, 3, 100}
+face[4]: {37, 3, 100}
+face[5]: {37, 3, 100}
+end_block() // glass_nt
+
+// begin_block(torch) : deco
+// emission: 15
+// face[0]: (28, 0.375)
+// face[1]: (28, 0.375)
+// face[2]: (28, 0.375)
+// face[3]: (28, 0.375)
+// face[4]: (29, 0.25)
+// face[5]: (29, 0)
+// end_block() // torch
+
+begin_block(torch)
+transparent: true
+cast_light: false
+emission: 15
+face[0]: {37, 3, 100}
+face[1]: {37, 3, 100}
+face[2]: {37, 3, 100}
+face[3]: {37, 3, 100}
+face[4]: {37, 3, 100}
+face[5]: {37, 3, 100}
+end_block() // glass_nt

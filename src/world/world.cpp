@@ -4,13 +4,14 @@
 
 #include <cassert>
 #include "world.hpp"
+#include "application.hpp"
 
 World::World(const WorldInitInfo &initInfo) :
     saver{initInfo.file.empty() ?
         worldname2filename(initInfo.name) : initInfo.file},
     name{initInfo.name},
     seed{initInfo.seed},
-    cam{initInfo.camera}
+    cam{get_active_camera()}
 {
     if (!initInfo.file.empty())
         saver.load(*this);
@@ -46,12 +47,12 @@ void World::check_preload_block(Chunk& c) {
 
 std::optional<mathpls::ivec3> World::cast_block(Ray ray, bool previous) const {
     mathpls::ivec3 pp = ray.origin;
-    if (::get_block(get_block(pp))->collidable())
+    if (::get_block(get_block(pp))->collidable)
         return pp;
 
     constexpr int max_step = 8;
     for (int i = 0; i < max_step; ++i)
-        if (auto pos = ray.step(); ::get_block(get_block(pos))->collidable())
+        if (auto pos = ray.step(); ::get_block(get_block(pos))->collidable)
             return previous ? pp : mathpls::ivec3{pos};
         else pp = pos;
     return std::nullopt;

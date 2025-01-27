@@ -5,6 +5,7 @@
 #pragma once
 
 #include "block/block.hpp"
+#include "block/material.hpp"
 
 #include <vector>
 
@@ -39,14 +40,14 @@ struct Chunk {
         Chunk* c = nullptr;
         int y, z, x;
     };
-    chunk_neighbor_r find_chunk_neighbor(int x, int y, int z); // accept pos not within [0, 15]
+    chunk_neighbor_r find_chunk_neighbor(int y, int z, int x); // accept pos not within [0, 15]
 
     BlockType get_block(mathpls::ivec3 pos) const;
     void set_block(mathpls::ivec3 pos, BlockType type);
 
     void check_highmap(mathpls::ivec3 pos, BlockType type);
     void check_neighbor(mathpls::ivec3 pos, BlockBase* o, BlockBase* n);
-    void check_brightness(mathpls::ivec3 pos, int16_t o, int16_t n);
+    void check_brightness(mathpls::ivec3 pos, int16_t o, int16_t n, bool cast_light);
 
     void load_brightness(int y, int z, int x, int16_t e);
     void unload_brightness(int y, int z, int x, int16_t e);

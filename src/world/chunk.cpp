@@ -61,7 +61,7 @@ void Chunk::set_block(mathpls::ivec3 pos, BlockType type) {
     block.type = type;
 
     check_neighbor(pos, o, n);
-    check_brightness(pos, block.brightness, n->emission());
+    check_brightness(pos, block.brightness, n->emission, n->cast_light);
 
     is_dirty = true;
 }
@@ -69,28 +69,39 @@ void Chunk::set_block(mathpls::ivec3 pos, BlockType type) {
 
 void Chunk::check_highmap(mathpls::ivec3 pos, BlockType type) {
     if (high_map[pos.x][pos.z] <= pos.y) {
-        if (::get_block(type)->cast_light())
+        if (::get_block(type)->cast_light)
             high_map[pos.x][pos.z] = pos.y + 1;
         raise_height((float) pos.y);
-    } else if (high_map[pos.x][pos.z] - 1 == pos.y && !::get_block(type)->cast_light())
+    } else if (high_map[pos.x][pos.z] - 1 == pos.y && !::get_block(type)->cast_light)
         do { high_map[pos.x][pos.z]--;
-        } while (!get_block(high_map[pos.x][pos.z] - 1, pos.z, pos.x)->cast_light());
+        } while (!get_block(high_map[pos.x][pos.z] - 1, pos.z, pos.x)->cast_light);
 }
 
 void Chunk::check_neighbor(mathpls::ivec3 pos, BlockBase* o, BlockBase* n) {
-    if ((o->transparent() && o->fluid()) || (n->transparent() && n->fluid())) {
+    if ((o->transparent && o->fluid) || (n->transparent && n->fluid)) {
         search_neighbors_plus(pos.y, pos.z, pos.x);
     } else {
-        if ((o->fragmentary() || o->transparent()) != (n->fragmentary() || n->transparent()))
+        if ((o->fragmentary || o->transparent) != (n->fragmentary || n->transparent))
             new_neighbor(pos.y, pos.z, pos.x);
-        if (n->renderable() && !o->renderable())
+        if (n->renderable && !o->renderable)
             blocks[pos.y][pos.z][pos.x].neighbors = search_neighbors(pos.y, pos.z, pos.x);
     }
 }
 
-void Chunk::check_brightness(mathpls::ivec3 pos, int16_t o, int16_t n) {
-    if (o == n) return;
+void Chunk::check_brightness(mathpls::ivec3 pos, int16_t o, int16_t n, bool cast_light) {
+    if (o == n && cast_light) return;
     if (o > n) unload_brightness(pos.y, pos.z, pos.x, o);
+    if (!cast_light) {
+        constexpr mathpls::ivec3 dp[]{
+            { 1, 0, 0}, { 0, 1, 0}, { 0, 0, 1},
+            {-1, 0, 0}, { 0,-1, 0}, { 0, 0,-1}
+        };
+        for (auto&& d : dp) {
+            auto [px, py, pz] = (pos + d).asArray;
+            auto [c, y, z, x] = find_chunk_neighbor(py, pz, px);
+            if (c) n = (int16_t)std::max<int>(n, c->blocks[y][z][x].brightness - 1); // avoid '0 - 1'
+        }
+    }
     load_brightness(pos.y, pos.z, pos.x, n);
 }
 
@@ -100,25 +111,25 @@ void Chunk::load_brightness(int y, int z, int x, int16_t e) {
     is_dirty = true;
 
     if (e-- < 2) return;
-    if (y > 0 && !get_block(y-1, z, x)->cast_light())
+    if (y > 0 && !get_block(y-1, z, x)->cast_light)
         load_brightness(y-1, z, x, e);
-    if (y < blocks.size()-1 && !get_block(y+1, z, x)->cast_light())
+    if (y < blocks.size()-1 && !get_block(y+1, z, x)->cast_light)
         load_brightness(y+1, z, x, e);
-    if (z > 0 && !get_block(y, z-1, x)->cast_light())
+    if (z > 0 && !get_block(y, z-1, x)->cast_light)
         load_brightness(y, z-1, x, e);
-    if (z < 15 && !get_block(y, z+1, x)->cast_light())
+    if (z < 15 && !get_block(y, z+1, x)->cast_light)
         load_brightness(y, z+1, x, e);
-    if (x > 0 && !get_block(y, z, x-1)->cast_light())
+    if (x > 0 && !get_block(y, z, x-1)->cast_light)
         load_brightness(y, z, x-1, e);
-    if (x < 15 && !get_block(y, z, x+1)->cast_light())
+    if (x < 15 && !get_block(y, z, x+1)->cast_light)
         load_brightness(y, z, x+1, e);
-    if (z == 0 && neighbor[2] && !neighbor[2]->get_block(y, 15, x)->cast_light())
+    if (z == 0 && neighbor[2] && !neighbor[2]->get_block(y, 15, x)->cast_light)
         neighbor[2]->load_brightness(y, 15, x, e);
-    if (z == 15 && neighbor[1] && !neighbor[1]->get_block(y, 0, x)->cast_light())
+    if (z == 15 && neighbor[1] && !neighbor[1]->get_block(y, 0, x)->cast_light)
         neighbor[1]->load_brightness(y, 0, x, e);
-    if (x == 0 && neighbor[3] && !neighbor[3]->get_block(y, z, 15)->cast_light())
+    if (x == 0 && neighbor[3] && !neighbor[3]->get_block(y, z, 15)->cast_light)
         neighbor[3]->load_brightness(y, z, 15, e);
-    if (x == 15 && neighbor[0] && !neighbor[0]->get_block(y, z, 0)->cast_light())
+    if (x == 15 && neighbor[0] && !neighbor[0]->get_block(y, z, 0)->cast_light)
         neighbor[0]->load_brightness(y, z, 0, e);
 }
 
@@ -142,7 +153,7 @@ void Chunk::unload_brightness(int y, int z, int x, int16_t e) {
         f = true;
 
         auto r = find_chunk_neighbor(ny,nz, nx);
-        if (!r.c || r.c->get_block(r.y, r.z, r.x)->cast_light()) continue;
+        if (d && (!r.c || r.c->get_block(r.y, r.z, r.x)->cast_light)) continue;
         if (e - d >= r.c->blocks[r.y][r.z][r.x].brightness) {
             r.c->blocks[r.y][r.z][r.x].brightness = 0;
             r.c->is_dirty = true;
@@ -182,22 +193,22 @@ int16_t Chunk::block_brightness(int y, int z, int x) const {
 }
 
 bool Chunk::is_renderable(int y, int z, int x) const {
-    return get_block(y, z, x)->renderable();
+    return get_block(y, z, x)->renderable;
 }
 
 bool Chunk::is_fragmentary(int y, int z, int x) const {
-    return get_block(y, z, x)->fragmentary();
+    return get_block(y, z, x)->fragmentary;
 }
 
 bool Chunk::is_transparent(int y, int z, int x) const {
-    return get_block(y, z, x)->transparent();
+    return get_block(y, z, x)->transparent;
 }
 
 void Chunk::update_height_map() {
     for (int z = 0; z < 16; z++)
         for (int x = 0; x < 16; x++)
             for (int y = (int)blocks.size(); y > 0; y--)
-                if (get_block(y-1, z, x)->cast_light()) {
+                if (get_block(y-1, z, x)->cast_light) {
                     high_map[x][z] = y;
                     break;
                 }
@@ -205,8 +216,8 @@ void Chunk::update_height_map() {
 
 bool is_visible_neighbor(BlockType a, BlockType n) {
     auto&& nb = ::get_block(n);
-    return nb->fragmentary() ||
-          (nb->transparent() && (!nb->fluid() || a != n));
+    return nb->fragmentary ||
+          (nb->transparent && (!nb->fluid || a != n));
 }
 
 FaceMask Chunk::search_neighbors(int y, int z, int x) const {
@@ -326,7 +337,7 @@ float Chunk::brightness(int facing, int y, int z, int x) const {
                 return 0;
         }
     }();
-    if (auto e  = get_block(y, z, x)->emission(); e > 0)
+    if (auto e  = get_block(y, z, x)->emission; e > 0)
         return (float)(e > b ? e : b) / BlockBase::max_emission;
     return (float)b / BlockBase::max_emission;
 }
@@ -334,21 +345,18 @@ float Chunk::brightness(int facing, int y, int z, int x) const {
 void Chunk::get_block_face(int y, int z, int x, FaceMask mask, ChunkFace& cf) const {
     auto&& b = get_block(y, z, x);
     auto pos = mathpls::vec3(x + position.x, y, z + position.z);
-    if (b->special()) {
-        for (auto&& i : b->get_special_faces(mask)) {
-            if (!i) break;
-            i->pos = pos;
-            i->sunIntensity = (uint16_t)(calcu_sun_intensity(i->facing, y, z, x) * UINT16_MAX);
-            i->lightIntensity = (uint16_t)(brightness(i->facing, y, z, x) * UINT16_MAX);
-            cf.special_faces.push_back(*i);
-        }
-    } else {
-        for (auto&& i : b->get_faces(mask)) {
-            if (!i) break;
-            i->pos = pos;
-            i->sunIntensity = (uint16_t)(calcu_sun_intensity(i->facing, y, z, x) * UINT16_MAX);
-            i->lightIntensity = (uint16_t)(brightness(i->facing, y, z, x) * UINT16_MAX);
-            cf.normal_faces.push_back(*i);
-        }
+    for (auto i : b->special_faces) {
+        if (!(mask & (1 << i.facing))) continue;
+        i.pos = pos;
+        i.sunIntensity = (uint16_t)(calcu_sun_intensity(i.facing, y, z, x) * UINT16_MAX);
+        i.lightIntensity = (uint16_t)(brightness(i.facing, y, z, x) * UINT16_MAX);
+        cf.special_faces.push_back(i);
+    }
+    for (auto i : b->common_faces) {
+        if (!(mask & (1 << i.facing))) continue;
+        i.pos = pos;
+        i.sunIntensity = (uint16_t)(calcu_sun_intensity(i.facing, y, z, x) * UINT16_MAX);
+        i.lightIntensity = (uint16_t)(brightness(i.facing, y, z, x) * UINT16_MAX);
+        cf.normal_faces.push_back(i);
     }
 }

@@ -1,12 +1,8 @@
-#include "render/window.hpp"
-
-#include <iostream>
+#include "application.hpp"
 
 int main() {
-    Window window{{
-        .extent = {1600, 1000},
-        .title = "craftmine"
-    }};
-
-    window.loop();
+    app = new Application;
+    app->init();
+    app->run();
+    app->destroy();
 }

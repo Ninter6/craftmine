@@ -31,10 +31,9 @@ HotBar::HotBar(int length, float size, float y)
 
 float block_view(BlockType bt) {
     auto&& b = get_block(bt);
-    if (b->special())
-        return b->get_special_faces(1)[0]->firstTex;
-    else
-        return b->get_faces(1)[0]->texIndex;
+    if (!b->special_faces.empty())
+        return b->special_faces[0].firstTex;
+    return b->common_faces[0].texIndex;
 }
 
 std::vector<ui_unit> HotBar::get_units() const {

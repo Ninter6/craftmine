@@ -67,8 +67,6 @@ private:
     int installed_chunks = 0;
     std::unordered_map<ChunkPos, int> chunk_map;
 
-    std::unique_ptr<Camera> camera;
-
     std::unique_ptr<Texture> block_tex;
     std::unique_ptr<Texture> sky_tex;
     std::unique_ptr<Texture> star_tex;
@@ -77,7 +75,7 @@ private:
 
     std::unique_ptr<OIT> oit;
 
-    friend Window;
+    friend class Application;
 
 private:
     void update_chunk(ChunkData& chunk, const ChunkFace& new_face);
@@ -88,7 +86,6 @@ private:
     void update_ubo(const DrawData& data);
 
     void init_shader();
-    void init_camera(int w, int h);
     void init_buffer();
     void init_chunk_buffers();
     void init_texture();

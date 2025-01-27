@@ -69,7 +69,7 @@ void WorldSaver::load(World& world) {
                 for (int y = 0, b = 0; b < data.size(); y++)
                     for (int z = 0; z < 16 && b < data.size(); z++)
                         for (int x = 0; x < 16 && b < data.size(); x++, b++)
-                            if (get_block(data[b])->emission() > 0)
+                            if (get_block(data[b])->emission > 0)
                                 lsb.emplace_back(mathpls::ivec3{pos.x + x, y, pos.z + z}, data[b]);
                             else
                                 chunk.blocks[y][z][x].type = data[b];

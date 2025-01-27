@@ -5,12 +5,12 @@
 #include "renderer.hpp"
 
 #include "window.hpp"
+#include "application.hpp"
 
 #include "utils/check_gl.h"
 
 Renderer::Renderer(int w, int h) {
     init_shader();
-    init_camera(w, h);
     init_buffer();
     init_texture();
     init_oit(w, h);
@@ -30,11 +30,6 @@ void Renderer::init_shader() {
     composite = std::make_unique<CompositeShader>();
 }
 
-void Renderer::init_camera(int w, int h) {
-    camera = std::make_unique<Camera>(mathpls::vec3{5, 64, 5}, mathpls::vec3{});
-    camera->setProjPerspective(mathpls::radians(60.f), (float)w / (float)h, .1f, 100.f);
-}
-
 void Renderer::init_buffer() {
     cube_vao = std::make_unique<VAO>();
     cube_vao->bind();
@@ -44,7 +39,7 @@ void Renderer::init_buffer() {
     quad_vbo = std::make_unique<QuadVBO>();
     init_chunk_buffers();
 
-    UBO ubo_data = {camera->proj, camera->view()};
+    UBO ubo_data = {getCamera()->proj, getCamera()->view()};
 
     ubo = std::make_unique<Buffer>(GL_UNIFORM_BUFFER, true);
     ubo->buffer(&ubo_data, 0, sizeof(UBO));
@@ -138,10 +133,10 @@ void Renderer::init_event(Window& window, Eventor& eventor) {
         auto asp = (float)w / (float)h;
         ui->use();
         glUniform1f(glGetUniformLocation(ui->ID(), "aspect"), asp);
-        camera->resetAspect(asp);
+        getCamera()->resetAspect(asp);
     });
 
-    camera->init_event(eventor);
+    getCamera()->init_event(eventor);
 }
 
 void Renderer::init_oit(int w, int h) {
@@ -226,7 +221,7 @@ void Renderer::render_pass_2D(const DrawData& draw_data) {
 }
 
 Camera* Renderer::getCamera() const{
-    return camera.get();
+    return get_active_camera();
 }
 
 void Renderer::update_chunk(Renderer::ChunkData& chunk, const ChunkFace& new_face) {
@@ -248,13 +243,13 @@ void Renderer::update_chunk(Renderer::ChunkData& chunk, const ChunkFace& new_fac
 
 void Renderer::update_ubo(const DrawData& data) {
     UBO ubo_data{
-        camera->proj,
-        camera->view(),
+        getCamera()->proj,
+        getCamera()->view(),
         data.sun_dir,
         data.sun_I
     };
     std::memcpy(ubo->mem_map, &ubo_data, sizeof(ubo_data));
-    camera->is_dirty = false;
+    getCamera()->is_dirty = false;
 }
 
 void Renderer::update_chunks(const DrawData& data) {

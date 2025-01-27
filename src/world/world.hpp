@@ -6,7 +6,6 @@
 
 #include <string>
 #include <optional>
-#include <unordered_set>
 
 #include "chunk.hpp"
 #include "gen/worldgen.hpp"
@@ -30,7 +29,6 @@ struct WorldInitInfo {
     std::string file = {};
     std::string name = "test";
     uint32_t seed;
-    Camera* camera;
 };
 
 class World {

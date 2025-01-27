@@ -11,6 +11,26 @@
 #include "math/mathpls.h"
 #include "render/render_type.hpp"
 
+struct BasicBlock {
+    std::string name;
+
+    bool renderable = true;
+
+    bool fragmentary = false;
+    bool cast_light = true;
+    bool collidable = true;
+
+    // bool is_special = false;
+    bool transparent = false;
+    bool fluid = false;
+
+    static constexpr float max_emission = 25;
+    int16_t emission = 0;
+
+    std::vector<Face> common_faces;
+    std::vector<SpecialFace> special_faces;
+};
+
 enum class BlockType : uint8_t {
     air = 0,
     grass_block,
@@ -366,5 +386,6 @@ struct Torch : Decoration<Torch> {
 
 }
 
-using block::BlockBase;
+using BlockBase = const BasicBlock;
 BlockBase* get_block(BlockType type);
+BlockBase* get_block(const std::string& name);

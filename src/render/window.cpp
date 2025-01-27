@@ -12,8 +12,6 @@ auto GLFW = glfw::init();
 
 Window::Window(const WindowInfo& info) : size(info.extent) {
     init_window(info);
-    init_render(size.x, size.y);
-    init_world();
     init_event();
 }
 
@@ -45,37 +43,6 @@ void Window::init_window(const WindowInfo& info) {
     glViewport(0, 0, size.x, size.y);
 }
 
-void Window::init_render(int w, int h) {
-    renderer = std::make_unique<Renderer>(w, h);
-
-    hotbar = std::make_unique<HotBar>(9);
-    ui = std::make_unique<UIManager>(*renderer->quad_vbo);
-    ui->add_widget(hotbar);
-    ui->add_widget(std::shared_ptr<ui_widget>{new basic_ui{-.05f, .1f, 2}});
-}
-
-void Window::init_world() {
-    uint32_t c, seed = 114514;
-    std::string file, name;
-    std::cout << "Type to choose:\n" "0. load world\n" "1. new world\n> ";
-    std::cin >> c;
-    if (c) {
-        std::cout << "Type your world's name:\n> ";
-        std::cin >> name;
-        std::cout << "Type seed:\n> ";
-        std::cin >> seed;
-    } else {
-        std::cout << "Type your world's name or full path to your file:\n> ";
-        std::cin >> file;
-    }
-    world = std::make_unique<World>(WorldInitInfo{
-        .file = c ? "" : file.ends_with(".cmw") ? std::move(file) : worldname2filename(file),
-        .name = name.empty() ? "myworld" : std::move(name),
-        .seed = seed,
-        .camera = renderer->getCamera()
-    });
-}
-
 void Window::init_event() {
     eventor = std::make_unique<Eventor>(
         std::make_shared<Listener>(
@@ -90,52 +57,13 @@ void Window::init_event() {
         cur = !cur;
         window.setInputModeCursor(cur ? glfw::CursorMode::Normal : glfw::CursorMode::Disabled);
     });
-    eventor->add_event({0, 0, 'V', 0}, [&](auto&& lsn) {
-        if (!lsn.IsKeyPressed('V')) return;
-        ui_visible = !ui_visible;
-    });
-    eventor->add_event({4, 0, 'S', 0}, [&](auto&& lsn) {
-        world->save();
-    });
-
-    renderer->init_event(*this, *eventor);
-
-    hotbar->init_event(*eventor);
-
-    eventor->add_event({{}, {}, {}, 0, {}}, [&](auto&& lsn) {
-        if (lsn.IsMouseButtonReleased(1))
-            world->set_camera_target_block(BlockType::air, false);
-        else if (lsn.IsMouseButtonReleased(2))
-            world->set_camera_target_block(hotbar->get_selected_block(), true);
-    });
 }
 
-void Window::loop() {
-    using cl = std::chrono::high_resolution_clock;
-    auto t = cl::now();
-    int count = 0;
-    while (!window.shouldClose()) {
-        update();
-        render();
-
-        window.swapBuffers();
-        glfw::pollEvents();
-
-        count++;
-        if (cl::now() - t > std::chrono::seconds{1}) {
-            std::printf("\rFPS: %d", count);
-            t = cl::now();
-            count = 0;
-        }
-    }
+bool Window::should_close() {
+    return window.shouldClose();
 }
 
-void Window::update() {
-    eventor->Update();
-    world->update();
-}
-
-void Window::render() {
-    renderer->render(world->get_draw_data());
-    if (ui_visible) ui->render_ui(renderer->ui.get());
+void Window::next_frame() {
+    window.swapBuffers();
+    glfw::pollEvents();
 }
