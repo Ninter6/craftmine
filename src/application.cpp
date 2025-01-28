@@ -3,6 +3,7 @@
 //
 
 #include "application.hpp"
+#include "utils/ThreadPool.h"
 
 #include <iostream>
 
@@ -31,32 +32,50 @@ void check_material(BlockMaterial* mat) {
 }
 
 void Application::init_world() {
-    uint32_t c, seed = 114514;
-    std::string file, name;
-    std::cout << "Type to choose:\n" "0. load world\n" "1. new world\n> ";
-    std::cin >> c;
-    if (c) {
-        std::cout << "Type your world's name:\n> ";
-        std::cin >> name;
-        std::cout << "Type seed:\n> ";
-        std::cin >> seed;
-    } else {
-        std::cout << "Type your world's name or full path to your file:\n> ";
-        std::cin >> file;
-    }
+    uint32_t c = 0, seed = 114514;
+    std::string file = FILE_ROOT"world/myworld.cmw", name = "myworld";
+    // std::cout << "Type to choose:\n" "0. load world\n" "1. new world\n> ";
+    // std::cin >> c;
+    // if (c) {
+    //     std::cout << "Type your world's name:\n> ";
+    //     std::cin >> name;
+    //     std::cout << "Type seed:\n> ";
+    //     std::cin >> seed;
+    // } else {
+    //     std::cout << "Type your world's name or full path to your file:\n> ";
+    //     std::cin >> file;
+    //     if (!file.ends_with(".cmw")) file = worldname2filename(file);
+    // }
 
-    std::cout << "Type path to your material file (empty to use default):\n> ";
-    std::string matfile;
-    std::cin.ignore(1, '\n');
-    std::getline(std::cin, matfile);
-    if (matfile.empty()) matfile = FILE_ROOT"materials/craftmine.txt";
-    if (matfile[0] != '/') matfile = FILE_ROOT + matfile;
+    // if (file[0]!= '/') {
+    //     std::ifstream fin(file);
+    //     if (!fin.is_open()) {
+    //         std::cerr << "Failed to open file: " << file << '\n';
+    //         return;
+    //     }
+    //     std::string line;
+    //     while (std::getline(fin, line)) {
+    //         if (line.empty() || line[0] == '#') continue;
+    //         auto pos = line.find(':');
+    //         if (pos == std::string::npos) {
+    //             std::cerr << "Invalid format: " << line << '\n';
+    //             continue;
+    //         }
+    //         std::string name = line.substr(0, pos);
+    // }
+
+    std::string matfile = FILE_ROOT"materials/craftmine.txt";
+    // std::cout << "Type path to your material file (empty to use default):\n> ";
+    // std::cin.ignore(1, '\n');
+    // std::getline(std::cin, matfile);
+    // if (matfile.empty()) matfile = FILE_ROOT"materials/craftmine.txt";
+    // if (matfile[0] != '/') matfile = FILE_ROOT + matfile;
     block_material = std::make_shared<BlockMaterial>(matfile);
     check_material(block_material.get());
 
     active_world = std::make_unique<World>(WorldInitInfo{
-        .file = c ? "" : file.ends_with(".cmw") ? std::move(file) : worldname2filename(file),
-        .name = name.empty() ? "myworld" : std::move(name),
+        .file = std::move(file),
+        .name = std::move(name),
         .seed = seed
     });
 }
@@ -148,3 +167,14 @@ BlockMaterial* get_block_material() {
     return app->block_material.get();
 }
 
+void async(const std::function<void()>& func) {
+    static auto num_threads = [] {
+        auto n = std::max(std::thread::hardware_concurrency(), 2u);
+#ifndef NDEBUG
+        std::cout << "using threads: " << n << '\n';
+#endif
+        return n;
+    }();
+    static ThreadPool tp{num_threads};
+    tp.enqueue(func);
+}

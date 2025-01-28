@@ -4,21 +4,33 @@
 
 #include "shader.hpp"
 
+#include "world/chunk.hpp"
+#include "world/world.hpp"
+
 #include <cassert>
 #include <fstream>
 #include <sstream>
 
 #include "utils/check_gl.h"
 
-std::string ShaderProcessor::process(const std::string &src) {
-    auto last = src.rfind("}]");
-    if (last == std::string::npos && (last = src.rfind("]]")) == std::string::npos)
-        return src;
+#define STR(x) #x
+#define XSTR(x) STR(x)
 
-    assert(src.find("#version") > last);
+constexpr auto shader_def = "\n"
+    "#define CHUNK_SIZE_X " XSTR(CHUNK_SIZE_X) "\n"
+    "#define CHUNK_SIZE_Z " XSTR(CHUNK_SIZE_Z) "\n"
+    "#define SIGHT_DISTANCE " XSTR(SIGHT_DISTANCE) "\n";
+
+std::string ShaderProcessor::process(const std::string &src) {
+    auto lasta = src.rfind("}]");
+    auto lastb = src.rfind("]]");
+    auto last = std::max(lasta == std::string::npos ? 0 : lasta, lastb == std::string::npos ? 0 : lastb);
+    if (last == 0) return std::string{src}.insert(src.find("core") + 5, shader_def);
+
+    assert(src.find("#version") > last && src.find("core") != std::string::npos);
 
     auto bind = src.substr(0, last + 2);
-    auto rst = src.substr(last + 2);
+    auto rst = src.substr(last + 3).insert(src.find("core") - last + 2, shader_def);
 
     std::stringstream ss;
     ss << bind << "\n";

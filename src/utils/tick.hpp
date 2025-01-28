@@ -11,7 +11,7 @@ struct Ticker {
 
     Ticker() : last(clock::now()) {}
     Ticker(int ms_per_tick, int tick_per_day)
-    : last(clock::now()), now(tick_per_day/4*3), ms_per_tick(ms_per_tick), tick_per_day(tick_per_day) {}
+    : last(clock::now()), now(tick_per_day/16*15), ms_per_tick(ms_per_tick), tick_per_day(tick_per_day) {}
 
     int tick() {
         int pass = (int)std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - last).count();

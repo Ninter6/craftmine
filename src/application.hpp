@@ -45,3 +45,5 @@ extern Application* app;
 World* get_active_world();
 Camera* get_active_camera();
 BlockMaterial* get_block_material();
+
+void async(const std::function<void()>&);

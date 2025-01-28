@@ -203,24 +203,24 @@ face[4]: {37, 3, 100}
 face[5]: {37, 3, 100}
 end_block() // glass_nt
 
-// begin_block(torch) : deco
-// emission: 15
-// face[0]: (28, 0.375)
-// face[1]: (28, 0.375)
-// face[2]: (28, 0.375)
-// face[3]: (28, 0.375)
-// face[4]: (29, 0.25)
-// face[5]: (29, 0)
-// end_block() // torch
-
-begin_block(torch)
-transparent: true
-cast_light: false
+begin_block(torch) : deco
 emission: 15
-face[0]: {37, 3, 100}
-face[1]: {37, 3, 100}
-face[2]: {37, 3, 100}
-face[3]: {37, 3, 100}
-face[4]: {37, 3, 100}
-face[5]: {37, 3, 100}
-end_block() // glass_nt
+face[0]: (28, 0.375)
+face[1]: (28, 0.375)
+face[2]: (28, 0.375)
+face[3]: (28, 0.375)
+face[4]: (29, 0.25)
+face[5]: (29, 0)
+end_block() // torch
+
+// begin_block(torch)
+// transparent: true
+// cast_light: false
+// emission: 15
+// face[0]: {37, 3, 100}
+// face[1]: {37, 3, 100}
+// face[2]: {37, 3, 100}
+// face[3]: {37, 3, 100}
+// face[4]: {37, 3, 100}
+// face[5]: {37, 3, 100}
+// end_block() // glass_nt

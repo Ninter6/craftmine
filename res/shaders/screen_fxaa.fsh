@@ -1,5 +1,5 @@
 [{tex,4}]
-#version 410
+#version 410 core
 
 out vec4 color;
 uniform sampler2D tex;

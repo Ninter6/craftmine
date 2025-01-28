@@ -1,5 +1,5 @@
 [{tex,3}]
-#version 330
+#version 330 core
 
 in vec3 fragPos;
 in vec2 fragUV;

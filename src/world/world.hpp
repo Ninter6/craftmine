@@ -17,8 +17,8 @@
 #include "render/camera.hpp"
 #include "render/render_type.hpp"
 
-constexpr int SIGHT_DISTANCE = 2;
-constexpr int WORLD_RADIUS = INT16_MAX;
+#define SIGHT_DISTANCE 4
+#define WORLD_RADIUS INT16_MAX
 
 struct PreloadInfo {
     int x, y, z; // 0 ~ 15
@@ -61,7 +61,7 @@ public:
     DrawData get_draw_data(); // this will reset chunks' dirty flag
     std::unordered_map<ChunkPos, ChunkFace> get_dirty_chunk_data();
 
-    std::optional<Chunk*> is_chunk_initialized(ChunkPos p) const; // if uninitialized, return nullopt
+    Chunk* is_chunk_initialized(ChunkPos p) const; // if uninitialized, return nullptr
 
 private:
     std::string name;

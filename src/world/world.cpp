@@ -14,7 +14,7 @@ World::World(const WorldInitInfo &initInfo) :
     cam{get_active_camera()}
 {
     if (!initInfo.file.empty())
-        saver.load(*this);
+        saver.load(*this); // it will cover the name and the seed
     gen = std::make_unique<WorldGen>(seed);
     calcu_camera_chunk();
 }
@@ -28,7 +28,7 @@ BlockType World::get_block(const mathpls::ivec3& pos) const {
 void World::set_block(const mathpls::ivec3& pos, BlockType type) {
     ChunkPos cp = {pos.x & ~15, pos.z & ~15};
     if (auto p = is_chunk_initialized(cp))
-        (*p)->set_block(pos - mathpls::ivec3(cp), type);
+        p->set_block(pos - mathpls::ivec3(cp), type);
     else
         push_preload_block(cp, pos.x & 15, pos.y, pos.z & 15, type);
 }
@@ -99,10 +99,10 @@ void World::new_chunk(ChunkPos pos, Chunk&& chunk) {
 
 void World::neighbor_chunk(Chunk& c, ChunkPos npos, int n) { // NOLINT(*-make-member-function-const)
     if (auto p = is_chunk_initialized(npos)) {
-        c.neighbor[n] = *p;
-        (*p)->neighbor[3-n] = &c;
-        (*p)->update_neighbors();
-        (*p)->is_dirty = true;
+        c.neighbor[n] = p;
+        p->neighbor[3-n] = &c;
+        p->update_neighbors();
+        p->is_dirty = true;
     }
 }
 
@@ -124,7 +124,7 @@ ChunkPos World::calcu_camera_chunk() {
 
 std::pair<ChunkPos, ChunkPos> World::get_camera_sight() const {
     auto d = cam->forward;
-    auto r = mathpls::cross({0, 1, 0}, d);
+    auto r = mathpls::cross({0, 1, 0}, d).normalized();
     auto u = mathpls::cross(d, r);
     mathpls::mat3 m = {r, u, d};
 
@@ -194,7 +194,8 @@ void calcu_sun(const Ticker& tk, mathpls::vec3& dir, float& I) {
     } else
         I = -204.8f * std::pow(t - .5f, 8.f) + 1.f;
     I = I * .9f + .05f;
-    dir = {cos(t * 3.1416f), sin(t * 3.1416f), cos(3.14f*tk.day/180)*.3f};
+    constexpr auto pi = mathpls::pi();
+    dir = {cosf(t * pi), sinf(t * pi), cosf(pi*(float)tk.day/180)*.3f};
     dir.normalize();
 }
 
@@ -228,9 +229,9 @@ std::unordered_map<ChunkPos, ChunkFace> World::get_dirty_chunk_data() {
     return dirty_chunks;
 }
 
-std::optional<Chunk*> World::is_chunk_initialized(ChunkPos p) const {
+Chunk* World::is_chunk_initialized(ChunkPos p) const {
     auto it = map.find(p);
-    return it != map.end() ? std::optional<Chunk*>{const_cast<Chunk*>(&it->second)} : std::nullopt;
+    return it != map.end() ? const_cast<Chunk*>(&it->second) : nullptr;
 }
 
 void World::save() {

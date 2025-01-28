@@ -2,13 +2,17 @@
 // Created by Ninter6 on 2024/8/19.
 //
 
+#include <mutex>
 #include <thread>
 #include <cassert>
 #include <fstream>
 #include <algorithm>
+#include <chrono>
 
 #include "worldsaver.hpp"
 #include "world/world.hpp"
+
+#include "application.hpp"
 
 std::string worldname2filename(const std::string& wn) {
     return FILE_ROOT"world/" + wn + ".cmw";
@@ -23,7 +27,10 @@ struct ReadChunk {
 
 void WorldSaver::load(World& world) {
     std::ifstream file(filename);
-    assert(file.good() && "file not found or failed to open");
+    if (!file.good()) {
+        printf("ERROR: failed to open file: %s", filename.c_str());
+        std::terminate();
+    }
 
     // world information
     file >> world.name >> world.seed;
@@ -55,37 +62,54 @@ void WorldSaver::load(World& world) {
 
     // the following code is executed asynchronously
     constexpr int nt = 8;
-    std::vector<std::thread> t{};
-    t.reserve(nt);
-    std::atomic_int c = 0;
+    std::atomic_int c = 0, s = 0;
+    std::mutex mut;
+    std::vector<Chunk> chunks; chunks.reserve(nc);
+    std::vector<std::pair<mathpls::ivec3, BlockType>> lsb; // light source block
     for (int n = 0; n < nt; ++n)
-        t.emplace_back([&, n]{
-            std::vector<std::pair<mathpls::ivec3, BlockType>> lsb; // light source block
+        async([&, n]{
+            const auto begin = nc*n/nt;
             const auto end = std::min(nc*(n+1)/nt, nc);
-            for (int i = nc*n/nt; i < end; ++i, ++c) {
+            std::vector<std::pair<mathpls::ivec3, BlockType>> ll;
+            std::vector<Chunk> cs; cs.reserve(end - begin);
+            for (int i = begin; i < end; ++i, ++c) {
                 auto& [pos, data] = rc[i];
-                Chunk chunk{pos};
+                Chunk& chunk = cs.emplace_back(pos);
                 chunk.raise_height((float)data.size() / 256.f);
                 for (int y = 0, b = 0; b < data.size(); y++)
                     for (int z = 0; z < 16 && b < data.size(); z++)
                         for (int x = 0; x < 16 && b < data.size(); x++, b++)
-                            if (get_block(data[b])->emission > 0)
-                                lsb.emplace_back(mathpls::ivec3{pos.x + x, y, pos.z + z}, data[b]);
+                            if (get_block(data[b])->emission > 1)
+                                ll.emplace_back(mathpls::ivec3{pos.x + x, y, pos.z + z}, data[b]);
                             else
                                 chunk.blocks[y][z][x].type = data[b];
-                chunk.update_neighbors();
                 chunk.update_height_map();
-                world.new_chunk(pos, std::move(chunk));
             }
-            while (c < nc) std::this_thread::yield(); // wait for next step
-            for (auto&& [p, b] : lsb) {
-                world.set_block(p, b);
-            }
+            std::lock_guard lock{mut};
+            std::copy(ll.begin(), ll.end(), std::back_inserter(lsb));
+            std::copy(cs.begin(), cs.end(), std::back_inserter(chunks));
+            ++s;
         });
+    auto t0 = std::chrono::system_clock::now();
     do {std::this_thread::yield();
         printf("\r正在加载: %d%%", 100*c/nc);
-    } while (c < nc);
-    for (auto&& i : t) i.join();
+    } while (s < nt);
+    printf("\n区块: %d 光源: %d\n", nc, (int)lsb.size());
+    auto t1 = std::chrono::system_clock::now();
+    for (auto&& ch : chunks)
+        world.new_chunk(ch.position, std::move(ch));
+    auto t2 = std::chrono::system_clock::now();
+    for (auto&& [p, b] : lsb)
+        world.set_block(p, b);
+    auto t3 = std::chrono::system_clock::now();
+    printf("loading: %.2fs\n",
+           std::chrono::duration<double>(t1 - t0).count());
+    printf("new_chunk: %.2fs (per chunk: %.2fms)\n",
+           std::chrono::duration<double>(t2 - t1).count(),
+           std::chrono::duration<double>(t2 - t1).count() / nc * 1e3f);
+    printf("set_block: %.2fs (per light: %.2fms)\n",
+           std::chrono::duration<double>(t3 - t2).count(),
+           std::chrono::duration<double>(t3 - t2).count() / lsb.size() * 1e3f);
 }
 
 void WorldSaver::save(const World& world) {

@@ -8,7 +8,6 @@ layout (location = 2) in vec2 uv;
 out vec3 fragDir;
 
 flat out vec3 camDir;
-flat out vec3 camPos;
 
 flat out vec3 sunDir;
 flat out float sunI;
@@ -20,15 +19,9 @@ layout(std140) uniform UBO {
     float sunI_;
 };
 
-void getCamPosDir() {
-    mat3 V = transpose(mat3(view));
-    camPos = V * view[3].xyz;
-    camDir = V[2];
-}
-
 void main() {
-    getCamPosDir();
-    sunDir = sunDir_;
+    camDir = transpose(mat3(view))[2];
+    sunDir = normalize(vec3(sunDir_.xy, 0));
     sunI = sunI_;
     fragDir = pos - 0.5;
     gl_Position = proj * vec4(mat3(view) * fragDir, 1.0);

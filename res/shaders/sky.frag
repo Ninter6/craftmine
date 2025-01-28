@@ -46,12 +46,11 @@ vec4 calcu_star(vec2 uv, float t) {
 
 void main() {
     vec3 f_dir = normalize(fragDir);
-    vec3 sun_dir = normalize(vec3(sunDir.xy, 0));
 
     vec2 uv = get_uv(f_dir);
     vec2 l_uv = vec2(uv.x, max(uv.y, 0));
 
-    float sun_t = acos(sun_dir.x) + 3.14159 * step(sunI, 0.229); // floating point error
+    float sun_t = acos(sunDir.x) + 3.14159 * step(sunI, 0.229); // floating point error
     sun_t *= 180.0 / 3.14159;
 
     color = calcu_sky(l_uv, sun_t) + calcu_star(uv, sun_t);

@@ -5,8 +5,10 @@
 #include <cassert>
 #include <utility>
 #include <queue>
+#include <latch>
 
 #include "chunk.hpp"
+#include "application.hpp"
 
 Chunk::Chunk(ChunkPos pos) : position(pos), blocks(64, Plane::zero()) {}
 
@@ -65,7 +67,6 @@ void Chunk::set_block(mathpls::ivec3 pos, BlockType type) {
 
     is_dirty = true;
 }
-
 
 void Chunk::check_highmap(mathpls::ivec3 pos, BlockType type) {
     if (high_map[pos.x][pos.z] <= pos.y) {
@@ -260,11 +261,21 @@ void Chunk::search_neighbors_plus(int y, int z, int x) {
 }
 
 void Chunk::update_neighbors() {
-    for (int y = 0; y < blocks.size(); y++)
-        for (int z = 0; z < 16; z++)
-            for (int x = 0; x < 16; x++)
-                if (is_renderable(y, z, x))
-                    blocks[y][z][x].neighbors = search_neighbors(y, z, x);
+    assert(blocks.size() % 64 == 0);
+    constexpr int n = 8;
+    std::latch l{n};
+    for (int i = 0; i < n; ++i)
+        async([this, i, &l] {
+            int y_start = i * blocks.size() / n;
+            int y_end = (i + 1) * blocks.size() / n;
+            for (int y = y_start; y < y_end; y++)
+                for (int z = 0; z < 16; z++)
+                    for (int x = 0; x < 16; x++)
+                        if (is_renderable(y, z, x))
+                            blocks[y][z][x].neighbors = search_neighbors(y, z, x);
+            l.count_down();
+        });
+    l.wait();
 }
 
 void Chunk::new_neighbor(int y, int z, int x) {

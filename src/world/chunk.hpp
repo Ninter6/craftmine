@@ -9,7 +9,8 @@
 
 #include <vector>
 
-#define CHUNK_SIZE (ivec3(16, 0, 16))
+#define CHUNK_SIZE_X 16
+#define CHUNK_SIZE_Z 16
 
 struct BlockData {
     BlockType type = BlockType::air;
