@@ -9,7 +9,7 @@
 
 #include "chunk.hpp"
 #include "gen/worldgen.hpp"
-#include "gen/worldsaver.hpp"
+#include "gen/archive.hpp"
 
 #include "math/ray.hpp"
 #include "utils/tick.hpp"
@@ -73,11 +73,11 @@ private:
     Ticker ticker{50, 12000};
 
     std::unique_ptr<WorldGen> gen;
-    WorldSaver saver;
+    Archive saver;
 
     Camera* cam;
     ChunkPos camera_chunk{};
     std::pair<ChunkPos, ChunkPos> camera_sight, last_camera_sight;
 
-    friend WorldSaver;
+    friend Archive;
 };

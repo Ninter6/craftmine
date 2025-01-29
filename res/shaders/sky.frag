@@ -3,12 +3,10 @@
 #version 410 core
 
 in vec3 fragDir;
+in vec3 fogCol;
 
-flat in vec3 camDir;
-flat in vec3 camPos;
-
-flat in vec3 sunDir;
 flat in float sunI;
+flat in float sunT;
 
 out vec4 color;
 
@@ -40,8 +38,14 @@ vec4 calcu_sky(vec2 l_uv, float sun_t) {
 }
 
 vec4 calcu_star(vec2 uv, float t) {
-    vec4 col = texture(star, vec2(uv.x + t/1919.810, uv.y)) * max((0.2 - sunI) * 5, 0);
-    return mix(vec4(0.012, 0.02, 0.04, 1.0), col, smoothstep(0, 0.2, uv.y));
+    if (sunI > 0.23) return vec4(0);
+    return texture(star, vec2(uv.x + t/1919.810, uv.y)) * max(1 - sunI * 5, 0);
+}
+
+float height_fog(vec3 dir) {
+    const float S =.191981;
+    const float E = 0;
+    return smoothstep(S, E, dir.y);
 }
 
 void main() {
@@ -50,8 +54,5 @@ void main() {
     vec2 uv = get_uv(f_dir);
     vec2 l_uv = vec2(uv.x, max(uv.y, 0));
 
-    float sun_t = acos(sunDir.x) + 3.14159 * step(sunI, 0.229); // floating point error
-    sun_t *= 180.0 / 3.14159;
-
-    color = calcu_sky(l_uv, sun_t) + calcu_star(uv, sun_t);
+    color = mix(calcu_sky(l_uv, sunT) + calcu_star(uv, sunT), vec4(fogCol, 1), height_fog(f_dir));
 }

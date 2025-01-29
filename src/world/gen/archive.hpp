@@ -8,9 +8,9 @@
 
 class World;
 
-class WorldSaver {
+class Archive {
 public:
-    WorldSaver(std::string_view filename);
+    explicit Archive(std::string_view filename);
 
     void load(World& w);
     void save(const World& w);

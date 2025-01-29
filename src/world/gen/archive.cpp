@@ -2,14 +2,14 @@
 // Created by Ninter6 on 2024/8/19.
 //
 
+#include <latch>
 #include <mutex>
 #include <thread>
 #include <cassert>
 #include <fstream>
-#include <algorithm>
 #include <chrono>
 
-#include "worldsaver.hpp"
+#include "archive.hpp"
 #include "world/world.hpp"
 
 #include "application.hpp"
@@ -18,14 +18,14 @@ std::string worldname2filename(const std::string& wn) {
     return FILE_ROOT"world/" + wn + ".cmw";
 }
 
-WorldSaver::WorldSaver(std::string_view filename) : filename(filename) {}
+Archive::Archive(std::string_view filename) : filename(filename) {}
 
 struct ReadChunk {
     ChunkPos pos{};
     std::vector<BlockType> data{};
 };
 
-void WorldSaver::load(World& world) {
+void Archive::load(World& world) {
     std::ifstream file(filename);
     if (!file.good()) {
         printf("ERROR: failed to open file: %s", filename.c_str());
@@ -62,8 +62,8 @@ void WorldSaver::load(World& world) {
 
     // the following code is executed asynchronously
     constexpr int nt = 8;
-    std::atomic_int c = 0, s = 0;
     std::mutex mut;
+    std::latch latch{nt};
     std::vector<Chunk> chunks; chunks.reserve(nc);
     std::vector<std::pair<mathpls::ivec3, BlockType>> lsb; // light source block
     for (int n = 0; n < nt; ++n)
@@ -72,7 +72,7 @@ void WorldSaver::load(World& world) {
             const auto end = std::min(nc*(n+1)/nt, nc);
             std::vector<std::pair<mathpls::ivec3, BlockType>> ll;
             std::vector<Chunk> cs; cs.reserve(end - begin);
-            for (int i = begin; i < end; ++i, ++c) {
+            for (int i = begin; i < end; ++i) {
                 auto& [pos, data] = rc[i];
                 Chunk& chunk = cs.emplace_back(pos);
                 chunk.raise_height((float)data.size() / 256.f);
@@ -88,21 +88,21 @@ void WorldSaver::load(World& world) {
             std::lock_guard lock{mut};
             std::copy(ll.begin(), ll.end(), std::back_inserter(lsb));
             std::copy(cs.begin(), cs.end(), std::back_inserter(chunks));
-            ++s;
+            latch.count_down();
         });
     auto t0 = std::chrono::system_clock::now();
-    do {std::this_thread::yield();
-        printf("\r正在加载: %d%%", 100*c/nc);
-    } while (s < nt);
-    printf("\n区块: %d 光源: %d\n", nc, (int)lsb.size());
+    latch.wait();
+    printf("区块: %d 光源: %d\n", nc, (int)lsb.size());
     auto t1 = std::chrono::system_clock::now();
-    for (auto&& ch : chunks)
-        world.new_chunk(ch.position, std::move(ch));
+    for (size_t i = 0; i < chunks.size(); ++i) {
+        world.new_chunk(chunks[i].position, std::move(chunks[i]));
+        printf("\r正在加载: %lu%%", 100lu*(i+1)/chunks.size());
+    }
     auto t2 = std::chrono::system_clock::now();
     for (auto&& [p, b] : lsb)
         world.set_block(p, b);
     auto t3 = std::chrono::system_clock::now();
-    printf("loading: %.2fs\n",
+    printf("\nloading: %.2fs\n",
            std::chrono::duration<double>(t1 - t0).count());
     printf("new_chunk: %.2fs (per chunk: %.2fms)\n",
            std::chrono::duration<double>(t2 - t1).count(),
@@ -112,7 +112,7 @@ void WorldSaver::load(World& world) {
            std::chrono::duration<double>(t3 - t2).count() / lsb.size() * 1e3f);
 }
 
-void WorldSaver::save(const World& world) {
+void Archive::save(const World& world) {
     std::ofstream file(filename);
     assert(file.good());
 
