@@ -25,5 +25,5 @@ void main() {
 
     float moon = floor(fract(acos(sunDir.z / 0.3) / 3.1416 * 11) * 8 + 1) / map_size;
     vec2 muv = vec2(fract(moon), floor(moon) / map_size);
-    fragUV = step(sunI, 0.2) * muv + uv * 0.333;
+    fragUV = step(sunI, 0.23) * muv + uv * 0.333;
 }

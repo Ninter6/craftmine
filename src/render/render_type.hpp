@@ -16,7 +16,9 @@ struct UBO {
     mathpls::mat4 view;
 
     mathpls::vec3 sun_dir;
-    float sun_I;
+    float sun_I{};
+    mathpls::vec3 fog_col;
+    // float _nothing{};
 };
 
 struct color_u32 : mathpls::vec<uint8_t, 4> {
@@ -73,4 +75,5 @@ struct DrawData {
 
     mathpls::vec3 sun_dir;
     float sun_I;
+    mathpls::vec3 fog_col;
 };

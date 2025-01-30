@@ -246,7 +246,8 @@ void Renderer::update_ubo(const DrawData& data) {
         getCamera()->proj,
         getCamera()->view(),
         data.sun_dir,
-        data.sun_I
+        data.sun_I,
+        data.fog_col
     };
     std::memcpy(ubo->mem_map, &ubo_data, sizeof(ubo_data));
     getCamera()->is_dirty = false;

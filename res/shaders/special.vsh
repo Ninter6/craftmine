@@ -23,6 +23,7 @@ layout(std140) uniform UBO {
     mat4 view;
     vec3 sunDir;
     float sunI;
+    vec3 fogCol;
 };
 
 const float map_size = 12;

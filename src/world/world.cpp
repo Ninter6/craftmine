@@ -3,6 +3,8 @@
 //
 
 #include <cassert>
+#include <latch>
+
 #include "world.hpp"
 #include "application.hpp"
 
@@ -188,27 +190,40 @@ void World::update() {
 
 void calcu_sun(const Ticker& tk, mathpls::vec3& dir, float& I) {
     float t = (float) tk.now / (float) tk.tick_per_day * 2;
-    if (t > 1) {
-        I = 52428.8f * std::pow(t - 1.5f, 18.f);
-        t -= 1;
-    } else
-        I = -204.8f * std::pow(t - .5f, 8.f) + 1.f;
-    I = I * .9f + .05f;
+    if (t > 1)
+        I = 47185.92f * std::pow((t -= 1) - .5f, 18.f) + .05f;
+    else
+        I = -184.32f * std::pow(t - .5f, 8.f) + .95f;
     constexpr auto pi = mathpls::pi();
     dir = {cosf(t * pi), sinf(t * pi), cosf(pi*(float)tk.day/180)*.3f};
     dir.normalize();
 }
 
+void calcu_fog(const Camera& camera, const mathpls::vec3& sun_dir, float I, mathpls::vec3& fog_col) {
+    using namespace mathpls;
+    const vec3& cam = camera.forward;
+    vec2 dir = vec2(sun_dir.x, sun_dir.y - abs(sun_dir.x) * .08f).normalized();
+    float t = I <= .23f ? dot(vec2(0.995, 0.0995),-dir) : dot(vec2(0.9982,-0.05995), dir);
+    vec3 color = (I * .8f + .1f) * lerp(vec3(.6f, .7f, .9f), vec3(.7f, .2f, .1f), powf(t * .5f + .5f, 128));
+    fog_col = powf(powf(dot(-dir, vec2(cam)), 2) * .2f + .8f, 3) * color;
+}
+
 DrawData World::get_draw_data() {
     DrawData data;
+    std::latch l{1};
+    async([&] {
+        calcu_sun(ticker, data.sun_dir, data.sun_I);
+        calcu_fog(*cam, data.sun_dir, data.sun_I, data.fog_col);
+        l.count_down();
+    });
+
     data.camera_visible_range = camera_sight;
 
     data.dirty_chunk = get_dirty_chunk_data();
 
     data.camera_target_block = camera_target_block(true);
 
-    calcu_sun(ticker, data.sun_dir, data.sun_I);
-
+    l.wait();
     return data;
 }
 
