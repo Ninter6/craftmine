@@ -38,8 +38,8 @@ void Window::init_window(const WindowInfo& info) {
         std::cerr << "Failed to initialize GLAD" << std::endl;
         std::terminate();
     }(), 0);
-    GLint maxTextureSize;
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+    // GLint maxTextureSize;
+    // glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
     glViewport(0, 0, size.x, size.y);
 }
 

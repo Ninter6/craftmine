@@ -43,8 +43,8 @@ vec4 calcu_star(vec2 uv, float t) {
 }
 
 float height_fog(vec3 dir) {
-    const float S =.191981;
-    const float E = 0;
+    const float S =.1919;
+    float E = max(-.810,-exp(-45.14*pow(sunI-.36, 1.2)));
     return smoothstep(S, E, dir.y);
 }
 
