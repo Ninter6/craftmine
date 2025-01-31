@@ -8,20 +8,17 @@
 
 struct Ray {
     mathpls::vec3 step() {
-        auto dis = mathpls::vec3{
-            direction.x > 0 ? 1 - mathpls::fract(origin.x) : -mathpls::fract(origin.x),
-            direction.y > 0 ? 1 - mathpls::fract(origin.y) : -mathpls::fract(origin.y),
-            direction.z > 0 ? 1 - mathpls::fract(origin.z) : -mathpls::fract(origin.z)
-        };
-        for (int i = 0; i < 3; ++i)
-            if (direction[i] == 0) dis[i] = 9e9;
-            else dis[i] /= direction[i];
-        auto mt = mathpls::min(dis.x, mathpls::min(dis.y, dis.z));
-        origin = at(mt + 1e-5f);
-        return mathpls::floor(origin);
+        auto near = floor(origin) - origin;
+        float t = 1145e4;
+        for (int i = 0; auto d : direction) {
+            if (fabsf(d) < 1e-4f) { ++i; continue; }
+            if (d > 0) near[i] += 1;
+            t = std::min(t, near[i++] / d);
+        }
+        return floor(origin = at(t + 1e-4f));
     }
 
-    mathpls::vec3 at(float t) const {
+    [[nodiscard]] mathpls::vec3 at(float t) const {
         return origin + direction * t;
     }
 
