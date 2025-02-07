@@ -15,8 +15,15 @@ World::World(const WorldInitInfo &initInfo) :
     seed{initInfo.seed},
     cam{get_active_camera()}
 {
-    if (!initInfo.file.empty())
-        saver.load(*this); // it will cover the name and the seed
+    // if (!initInfo.file.empty())
+    //     saver.load(*this); // it will cover the name and the seed
+    gen = std::make_unique<WorldGen>(seed);
+    calcu_camera_chunk();
+}
+
+World::World(std::string_view filename) :
+    saver(filename), cam{get_active_camera()} {
+    saver.load(*this);
     gen = std::make_unique<WorldGen>(seed);
     calcu_camera_chunk();
 }

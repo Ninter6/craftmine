@@ -32,8 +32,8 @@ void check_material(BlockMaterial* mat) {
 }
 
 void Application::init_world() {
-    uint32_t c = 0, seed = 114514;
-    std::string file = FILE_ROOT"world/myworld.cmw", name = "myworld";
+    // uint32_t c = 0, seed = 114514;
+    // std::string file, name = "myworld";
     // std::cout << "Type to choose:\n" "0. load world\n" "1. new world\n> ";
     // std::cin >> c;
     // if (c) {
@@ -46,38 +46,25 @@ void Application::init_world() {
     //     std::cin >> file;
     //     if (!file.ends_with(".cmw")) file = worldname2filename(file);
     // }
-
-    // if (file[0]!= '/') {
-    //     std::ifstream fin(file);
-    //     if (!fin.is_open()) {
-    //         std::cerr << "Failed to open file: " << file << '\n';
-    //         return;
-    //     }
-    //     std::string line;
-    //     while (std::getline(fin, line)) {
-    //         if (line.empty() || line[0] == '#') continue;
-    //         auto pos = line.find(':');
-    //         if (pos == std::string::npos) {
-    //             std::cerr << "Invalid format: " << line << '\n';
-    //             continue;
-    //         }
-    //         std::string name = line.substr(0, pos);
-    // }
-
-    std::string matfile = FILE_ROOT"materials/craftmine.txt";
+    //
+    // std::string matfile = FILE_ROOT"materials/craftmine.txt";
     // std::cout << "Type path to your material file (empty to use default):\n> ";
-    // std::cin.ignore(1, '\n');
+    // std::cin.ignore(1);
     // std::getline(std::cin, matfile);
     // if (matfile.empty()) matfile = FILE_ROOT"materials/craftmine.txt";
     // if (matfile[0] != '/') matfile = FILE_ROOT + matfile;
-    block_material = std::make_shared<BlockMaterial>(matfile);
-    check_material(block_material.get());
-
-    active_world = std::make_unique<World>(WorldInitInfo{
-        .file = std::move(file),
-        .name = std::move(name),
-        .seed = seed
-    });
+    // block_material = std::make_shared<BlockMaterial>(matfile);
+    // check_material(block_material.get());
+    //
+    // if (file.empty())
+    //     active_world = std::make_unique<World>(WorldInitInfo{
+    //         .name = std::move(name),
+    //         .seed = seed
+    //     });
+    // else
+    //     active_world = std::make_unique<World>(file);
+    block_material = std::make_shared<BlockMaterial>(FILE_ROOT"materials/craftmine.txt");
+    active_world = std::make_unique<World>(FILE_ROOT"world/myworld.cmw");
 }
 
 void Application::init_window() {

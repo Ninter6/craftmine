@@ -16,7 +16,7 @@ uniform sampler2D star;
 vec2 get_uv(vec3 f_dir) {
     float cy = sqrt(1-f_dir.y*f_dir.y);
     vec2 uv;
-    uv.y = asin(f_dir.y) / 1.58;
+    uv.y = f_dir.y * 0.996;
     uv.x = 0.5 - atan(f_dir.x / cy, f_dir.z / cy) / 6.3;
     return uv;
 }

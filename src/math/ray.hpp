@@ -13,7 +13,7 @@ struct Ray {
         for (int i = 0; auto d : direction) {
             if (fabsf(d) < 1e-4f) { ++i; continue; }
             if (d > 0) near[i] += 1;
-            t = std::min(t, near[i++] / d);
+            t = fminf(t, near[i++] / d);
         }
         return floor(origin = at(t + 1e-4f));
     }
