@@ -38,6 +38,7 @@ private:
     std::unique_ptr<Shader> cube;
     std::unique_ptr<Shader> sky;
     std::unique_ptr<Shader> sun;
+    std::unique_ptr<Shader> cloud;
     std::unique_ptr<Shader> screen;
     std::unique_ptr<Shader> ui;
     std::unique_ptr<Shader> composite;
@@ -72,6 +73,7 @@ private:
     std::unique_ptr<Texture> star_tex;
     std::unique_ptr<Texture> sun_tex;
     std::unique_ptr<Texture> ui_tex;
+    std::unique_ptr<Texture> cloud_tex;
 
     std::unique_ptr<OIT> oit;
 

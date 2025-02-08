@@ -101,3 +101,11 @@ public:
     static std::string vertexShaderSource();
     static std::string fragmentShaderSource();
 };
+
+class CloudShader : public Shader {
+public:
+    CloudShader();
+
+    static std::string vertexShaderSource();
+    static std::string fragmentShaderSource();
+};

@@ -25,6 +25,7 @@ void Renderer::init_shader() {
     cube = std::make_unique<CubeShader>();
     sky = std::make_unique<SkyShader>();
     sun = std::make_unique<SunShader>();
+    cloud = std::make_unique<CloudShader>();
     screen = std::make_unique<ScreenShader>();
     ui = std::make_unique<UIShader>();
     composite = std::make_unique<CompositeShader>();
@@ -123,6 +124,9 @@ void Renderer::init_texture() {
 
     ui_tex = Texture::LoadFromFile(FILE_ROOT"images/ui.png");
     ui_tex->bind(7);
+
+    cloud_tex = Texture::LoadFromFile(FILE_ROOT"images/clouds.png");
+    cloud_tex->bind(8);
 }
 
 void Renderer::init_event(Window& window, Eventor& eventor) {
@@ -192,6 +196,11 @@ void Renderer::render_pass_3D(const DrawData& draw_data) {
     special->use();
     special_mesh->bind();
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, special_faces);
+
+    // cloud pass (ray marching)
+    cloud->use();
+    cube_vao->bind(); // avoid face culling
+    CHECK_GL(glDrawArrays(GL_TRIANGLES, 6, 6));
 
 //    auto [mn, mx] = draw_data.camera_visible_range;
 //    std::printf("%d\n", (mx.x - mn.x + 16)*(mx.z - mn.z + 16)/256);

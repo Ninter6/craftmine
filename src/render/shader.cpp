@@ -279,3 +279,22 @@ std::string ScreenShader::fragmentShaderSource() {
         std::istreambuf_iterator<char>{}
     };
 }
+
+CloudShader::CloudShader()
+: Shader(vertexShaderSource(), fragmentShaderSource()) {}
+
+std::string CloudShader::vertexShaderSource() {
+    std::ifstream frag{FILE_ROOT"shaders/cloud.vsh"};
+    return {
+        std::istreambuf_iterator<char>{frag},
+        std::istreambuf_iterator<char>{}
+    };
+}
+
+std::string CloudShader::fragmentShaderSource() {
+    std::ifstream frag{FILE_ROOT"shaders/cloud.fsh"};
+    return {
+        std::istreambuf_iterator<char>{frag},
+        std::istreambuf_iterator<char>{}
+    };
+}
